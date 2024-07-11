@@ -99,7 +99,8 @@ const companyCollections = [
 
 const ContentCalender = () => {
   const [calenderData, setCalenderData] = useState([]);
-  // const [expandedEntryId, setExpandedEntryId] = useState(null);
+  const [editableContent, setEditableContent] = useState({});
+  const [isEditing, setIsEditing] = useState({});
 
   useEffect(() => {
     async function fetchData() {
@@ -160,21 +161,38 @@ const ContentCalender = () => {
     return mapping;
   }, [dayDifference]);
 
-  // const toggleDropdown = (id) => {
-  //   setExpandedEntryId((prevId) => (prevId === id ? null : id));
-  // };
-
+  const openModal = (modalId) => {
+    document.getElementById(modalId).showModal();
+  };
+  const toggleEditMode = (id, storyType) => {
+    setIsEditing((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        [storyType]: !prev[id]?.[storyType],
+      },
+    }));
+  };
+  const handleContentChange = (id, storyType, newContent) => {
+    setEditableContent((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        [storyType]: newContent,
+      },
+    }));
+  };
   return (
     <>
       <section className="w-full h-auto overflow-y-auto px-5">
         <div className="w-full h-full flex justify-center items-center mt-4">
-          <div className="w-full h-auto flex justify-start items-center gap-4 bg-transparent rounded-full p-2">
+          <div className="w-full h-auto flex justify-start items-center gap-3 bg-transparent rounded-full py-2">
             <div
-              className="flex justify-center items-center"
+              className="flex justify-center items-center w-60"
               style={{
                 background: "transparent",
                 padding: "8px",
-                width: "200px",
+                // width: "200px",
                 minHeight: "40px",
                 height: "auto",
                 borderRadius: "10px",
@@ -185,55 +203,55 @@ const ContentCalender = () => {
               <p className="w-auto text-xs"></p>
             </div>
             <div
-              className="flex justify-center items-center rounded-full"
+              className="flex justify-center items-center rounded-lg w-10 h-10"
               style={{
                 background: "#161c40",
-                width: "30px",
-                height: "30px",
+                // width: "30px",
+                // height: "30px",
                 color: "#fff",
               }}
             >
               <p className="text-xs">روز</p>
             </div>
             <div
-              className="flex justify-center items-center rounded-full"
+              className="flex justify-center items-center rounded-lg w-68 h-10"
               style={{
                 background: "#161c40",
-                width: "300px",
-                height: "40px",
+                // width: "300px",
+                // height: "40px",
                 color: "#fff",
               }}
             >
               <p>محتوای اول</p>
             </div>
             <div
-              className="flex justify-center items-center rounded-full"
+              className="flex justify-center items-center rounded-lg w-68 h-10"
               style={{
                 background: "#161c40",
-                width: "300px",
-                height: "40px",
+                // width: "300px",
+                // height: "40px",
                 color: "#fff",
               }}
             >
               <p>محتوای دوم</p>
             </div>
             <div
-              className="flex justify-center items-center rounded-full"
+              className="flex justify-center items-center rounded-lg w-68 h-10"
               style={{
                 background: "#161c40",
-                width: "300px",
-                height: "40px",
+                // width: "300px",
+                // height: "40px",
                 color: "#fff",
               }}
             >
               <p>محتوای سوم</p>
             </div>
             <div
-              className="flex justify-center items-center rounded-full"
+              className="flex justify-center items-center rounded-lg w-68 h-10"
               style={{
                 background: "#161c40",
-                width: "250px",
-                height: "40px",
+                // width: "250px",
+                // height: "40px",
                 color: "#fff",
               }}
             >
@@ -250,10 +268,7 @@ const ContentCalender = () => {
             return (
               <div
                 key={entry.id}
-                id="accordion-collapse"
-                data-accordion="collapse"
-                // id="accordionExample"
-                className={`w-full h-auto flex justify-start items-center gap-4 rounded-full p-2 ${
+                className={`w-full h-auto flex justify-start items-center gap-3 rounded-lg py-2 ${
                   isBothDay
                     ? "bg-green-300"
                     : isFoodDay
@@ -263,22 +278,12 @@ const ContentCalender = () => {
                     : ""
                 }`}
               >
-                <div
-                  className="flex justify-center items-center"
-                  style={{
-                    background: "transparent",
-                    padding: "8px",
-                    width: "200px",
-                    minHeight: "40px",
-                    height: "auto",
-                    borderRadius: "10px",
-                    color: "#fff",
-                  }}
-                >
+                <div className="flex justify-center items-center w-60 h-10 p-2 bg-transparent text-black">
                   <p
                     className="w-auto text-black"
                     style={{
-                      fontSize: "13px",
+                      fontFamily: "iransans-black",
+                      fontSize: "14px",
                     }}
                   >
                     {isBothDay
@@ -295,60 +300,223 @@ const ContentCalender = () => {
                   </p>
                 </div>
                 <div
-                  className="flex justify-center items-center rounded-full"
+                  className="flex justify-center items-center rounded-lg w-10 h-10 text-white"
                   style={{
                     background: "#161c40",
-                    width: "30px",
-                    height: "30px",
-                    color: "#fff",
                   }}
                 >
                   <p className="text-sm">{digitsEnToFa(entry.day)}</p>
                 </div>
-                <div class="relative inline-block text-left">
-                  <div>
-                    <button
-                      type="button"
-                      className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                      id="menu-button"
-                      aria-expanded="true"
-                      aria-haspopup="true"
+                <div
+                  className="flex justify-center items-center rounded-lg w-68 h-10 cursor-pointer"
+                  style={{
+                    background: entry.first_color,
+                  }}
+                  onClick={() => openModal(`modal_${entry.id}_first`)}
+                >
+                  <p className="relative w-full h-full flex justify-center items-center text-white text-sm">
+                    <svg
+                      className="absolute left-3 w-3 h-3"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 512 512"
                     >
-                      {digitsEnToFa(entry.first_story)}
-                      <svg
-                        className="-mr-1 h-5 w-5 text-gray-400"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                        aria-hidden="true"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                  <div
-                    className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-                    role="menu"
-                    aria-orientation="vertical"
-                    aria-labelledby="menu-button"
-                    tabIndex="-1"
-                  >
-                    <div className="py-1" role="none">
-                      <a
-                        href="#"
-                        className="block px-4 py-2 text-sm text-gray-700"
-                        role="menuitem"
-                        tabIndex="-1"
-                        id="menu-item-0"
-                      >
-                        Account settings
-                      </a>
-                    </div>
-                  </div>
+                      <path
+                        fill="#ffffff"
+                        d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-1 2.5-32.8-12.5-45.3 0s -12.5 32.8 0 45.3l192 192z"
+                      />
+                    </svg>
+                    {digitsEnToFa(entry.first_story)}
+                  </p>
                 </div>
+                {/* Modal for this entry */}
+                <dialog id={`modal_${entry.id}_first`} className="modal">
+                  <div className="modal-box">
+                    <form action="" className="w-full h-full">
+                      <h3 className="w-full font-bold text-lg text-black text-right flex justify-between items-center">
+                          {isEditing[entry.id]?.first ? (
+                            <input
+                              type="text"
+                              value={editableContent[entry.id]?.first || entry.first_story}
+                              onChange={(e) => handleContentChange(entry.id, "first", e.target.value)}
+                            />
+                          ) : (
+                            digitsEnToFa(entry.first_story)
+                          )}
+                          <button 
+                          className="outline-none"
+                          type="button"
+                          onClick={() => toggleEditMode(entry.id, "first")}
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 512 512"
+                            >
+                              <path d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z" />
+                            </svg>
+                          </button>
+                      </h3>
+                      <p className="py-4">
+                        {digitsEnToFa(entry.first_explanation)}
+                      </p>
+                      <div className="modal-action">
+                        <form method="dialog">
+                          <button
+                            className="bg-blue-300 px-4 py-2 rounded-lg text-white hover:bg-blue-500"
+                            onClick={() =>
+                              document
+                                .getElementById(`modal_${entry.id}_first`)
+                                .close()
+                            }
+                          >
+                            بستن
+                          </button>
+                        </form>
+                      </div>
+                    </form>
+                  </div>
+                </dialog>
+                <div
+                  className="flex justify-center items-center rounded-lg w-68 h-10 cursor-pointer"
+                  style={{
+                    background: entry.second_color,
+                  }}
+                  onClick={() => openModal(`modal_${entry.id}_second`)}
+                >
+                  <p className="relative w-full h-full flex justify-center items-center text-white text-sm">
+                    <svg
+                      className="absolute left-2 w-3 h-3"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 512 512"
+                    >
+                      <path
+                        fill="#ffffff"
+                        d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"
+                      />
+                    </svg>
+                    {digitsEnToFa(entry.second_story)}
+                  </p>
+                </div>
+                <dialog id={`modal_${entry.id}_second`} className="modal">
+                  <div className="modal-box">
+                    <form action="" className="w-full h-full">
+                      <h3 className="font-bold text-lg">
+                        {digitsEnToFa(entry.second_story)}
+                      </h3>
+                      <p className="py-4">
+                        {digitsEnToFa(entry.second_explanation)}
+                      </p>
+                      <div className="modal-action">
+                        <form method="dialog">
+                          <button
+                            className="btn"
+                            onClick={() =>
+                              document
+                                .getElementById(`modal_${entry.id}_second`)
+                                .close()
+                            }
+                          >
+                            بستن
+                          </button>
+                        </form>
+                      </div>
+                    </form>
+                  </div>
+                </dialog>
+                <div
+                  className="flex justify-center items-center rounded-lg w-68 h-10 cursor-pointer"
+                  style={{
+                    background: entry.third_color,
+                  }}
+                  onClick={() => openModal(`modal_${entry.id}_third`)}
+                >
+                  <p className="relative w-full h-full flex justify-center items-center text-white text-sm">
+                    <svg
+                      className="absolute left-2 w-3 h-3"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 512 512"
+                    >
+                      <path
+                        fill="#ffffff"
+                        d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"
+                      />
+                    </svg>
+                    {digitsEnToFa(entry.third_story)}
+                  </p>
+                </div>
+                <dialog id={`modal_${entry.id}_third`} className="modal">
+                  <div className="modal-box">
+                    <form action="" className="w-full h-full">
+                      <h3 className="font-bold text-lg">
+                        {digitsEnToFa(entry.third_story)}
+                      </h3>
+                      <p className="py-4">
+                        {digitsEnToFa(entry.third_explanation)}
+                      </p>
+                      <div className="modal-action">
+                        <form method="dialog">
+                          <button
+                            className="btn"
+                            onClick={() =>
+                              document
+                                .getElementById(`modal_${entry.id}_third`)
+                                .close()
+                            }
+                          >
+                            بستن
+                          </button>
+                        </form>
+                      </div>
+                    </form>
+                  </div>
+                </dialog>
+                <div
+                  className="flex justify-center items-center rounded-lg w-68 h-10 cursor-pointer"
+                  style={{
+                    background: entry.fourth_color,
+                  }}
+                  onClick={() => openModal(`modal_${entry.id}`)}
+                >
+                  <p className="relative w-full h-full flex justify-center items-center text-white text-sm">
+                    <svg
+                      className="absolute left-2 w-3 h-3"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 512 512"
+                    >
+                      <path
+                        fill="#ffffff"
+                        d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"
+                      />
+                    </svg>
+                    {digitsEnToFa(entry.fourth_story)}
+                  </p>
+                </div>
+                <dialog id={`modal_${entry.id}`} className="modal">
+                  <div className="modal-box">
+                    <form action="" className="w-full h-full">
+                      <h3 className="font-bold text-lg">
+                        {digitsEnToFa(entry.fourth_story)}
+                      </h3>
+                      <p className="py-4">
+                        {digitsEnToFa(entry.fourth_explanation)}
+                      </p>
+                      <div className="modal-action">
+                        <form method="dialog">
+                          <button
+                            className="btn"
+                            onClick={() =>
+                              document
+                                .getElementById(`modal_${entry.id}`)
+                                .close()
+                            }
+                          >
+                            بستن
+                          </button>
+                        </form>
+                      </div>
+                    </form>
+                  </div>
+                </dialog>
               </div>
             );
           })}
