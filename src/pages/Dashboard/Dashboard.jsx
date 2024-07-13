@@ -5,12 +5,15 @@ import { ContentCalender } from "../../components/contentCalender/ContentCalende
 import styles from "./Dashboard.module.css";
 import profileImg from "../../assets/image/ProfilePicDefault.jpg";
 import { Page } from "../../components/Page/Page";
+import { jwtDecode } from "jwt-decode";
 
 const Dashboard = () => {
   const [persianTime, setPersianTime] = useState("");
   const [pageNames, setPageNames] = useState([]);
   const [selectedPage, setSelectedPage] = useState("contentCalender");
+  const [username, setUsername] = useState("");
 
+  // console.log(jwtDecode(toeken))
   useEffect(() => {
     const fetchPageNames = async () => {
       try {
@@ -33,7 +36,18 @@ const Dashboard = () => {
 
     return () => clearInterval(intervalId); // Cleanup interval on component unmount
   }, []);
-
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token && token.split('.').length === 3) {
+      try {
+        const decoded = jwtDecode(token);
+        setUsername(decoded.username); // Adjust according to your token's structure
+      } catch (error) {
+        console.error("Invalid token:", error);
+        setUsername("کاربر");
+      }
+    }
+  }, []);
   const updateTime = () => {
     const currentTime = new Date();
     const timeAndDate = moment(currentTime).format("jYYYY/jMM/jDD HH:mm:ss");
@@ -163,8 +177,8 @@ const Dashboard = () => {
                 }}
               />
               <div className="">
-                <p>پویا سلطانی</p>
-                <p>برنامه نویس</p>
+                <p>{username || "کاربر"}</p>
+                {/* <p>برنامه نویس</p> */}
               </div>
             </div>
           </div>

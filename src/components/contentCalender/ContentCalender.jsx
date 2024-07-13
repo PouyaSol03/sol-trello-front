@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { digitsEnToFa } from "@persian-tools/persian-tools";
 import { EditText, EditTextarea } from "react-edit-text";
-import 'react-edit-text/dist/index.css';
+import "react-edit-text/dist/index.css";
 
 const foodCollections = [
   {
@@ -103,7 +103,6 @@ const ContentCalender = () => {
   const [calenderData, setCalenderData] = useState([]);
   const [editedData, setEditedData] = useState({});
 
-
   useEffect(() => {
     async function fetchData() {
       const res = await fetch(
@@ -131,25 +130,32 @@ const ContentCalender = () => {
     }));
   };
   const handleSave = async (id) => {
-    const dataToSave = editedData[id];
-    const res = await fetch(`http://127.0.0.1:8000/api/content/fixed-content/${id}/`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(dataToSave),
-    });
-    if (res.ok) {
-      const updatedItem = await res.json();
-      setCalenderData((prevData) =>
-        prevData.map((item) => (item.id === id ? updatedItem : item))
-      );
-      setEditedData((prevData) => {
-        const { [id]: removed, ...rest } = prevData;
-        return rest;
-      });
-    } else {
-      console.error('Failed to save data');
+    const updatedEntry = editedData[id];
+    if (updatedEntry) {
+      try {
+        const response = await fetch(
+          `http://127.0.0.1:8000/api/content/fixed-content/${id}/`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updatedEntry),
+          }
+        );
+
+        if (response.ok) {
+          setCalenderData((prev) =>
+            prev.map((entry) =>
+              entry.id === id ? { ...entry, ...updatedEntry } : entry
+            )
+          );
+        } else {
+          console.error("Failed to save data");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
     }
   };
 
@@ -197,16 +203,13 @@ const ContentCalender = () => {
     return mapping;
   }, [dayDifference]);
 
-  
-
-
   return (
     <>
-      <section className="w-full h-auto overflow-y-auto px-5">
+      <section className="w-full h-auto overflow-y-auto overflow-x-auto px-5">
         <div className="w-full h-full flex justify-center items-center mt-4">
-          <div className="w-full h-auto flex justify-start items-center gap-3 bg-transparent rounded-full py-2">
+          <div className="w-auto h-auto flex justify-start items-center gap-3 bg-transparent py-2 overflow-x-auto px-1">
             <div
-              className="flex justify-center items-center w-60"
+              className="flex justify-center items-center w-48"
               style={{
                 background: "transparent",
                 padding: "8px",
@@ -221,7 +224,7 @@ const ContentCalender = () => {
               <p className="w-auto text-xs"></p>
             </div>
             <div
-              className="flex justify-center items-center rounded-lg w-10 h-10"
+              className="flex justify-center items-center rounded-lg w-12 h-10"
               style={{
                 background: "#161c40",
                 // width: "30px",
@@ -275,6 +278,17 @@ const ContentCalender = () => {
             >
               <p>محتوای چهارم</p>
             </div>
+            <div
+              className="flex justify-center items-center rounded-lg w-68 h-10"
+              style={{
+                background: "#161c40",
+                // width: "250px",
+                // height: "40px",
+                color: "#fff",
+              }}
+            >
+              <p>محتوای پنجم</p>
+            </div>
           </div>
         </div>
         <div className="w-full h-auto flex flex-col justify-start items-center mt-2 gap-1">
@@ -286,7 +300,7 @@ const ContentCalender = () => {
             return (
               <div
                 key={entry.id}
-                className={`w-full h-auto flex justify-start items-center gap-3 rounded-lg py-2 ${
+                className={`w-full h-auto flex justify-start items-center gap-3 rounded-lg px-1 py-2 ${
                   isBothDay
                     ? "bg-green-300"
                     : isFoodDay
@@ -296,7 +310,7 @@ const ContentCalender = () => {
                     : ""
                 }`}
               >
-                <div className="flex justify-center items-center w-60 h-10 p-2 bg-transparent text-black">
+                <div className="flex justify-center items-center w-48 h-10 p-2 bg-transparent text-black">
                   <p
                     className="w-auto text-black"
                     style={{
@@ -318,7 +332,7 @@ const ContentCalender = () => {
                   </p>
                 </div>
                 <div
-                  className="flex justify-center items-center rounded-lg w-10 h-10 text-white"
+                  className="flex justify-center items-center rounded-lg w-12 h-10 text-white"
                   style={{
                     background: "#161c40",
                   }}
@@ -332,62 +346,102 @@ const ContentCalender = () => {
                   }}
                   onClick={() => openModal(`modal_${entry.id}_first`)}
                 >
-                  <p className="relative w-full h-full flex justify-center items-center text-white text-sm">
-                    <svg
-                      className="absolute left-3 w-3 h-3"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 512 512"
-                    >
-                      <path
-                        fill="#ffffff"
-                        d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-1 2.5-32.8-12.5-45.3 0s -12.5 32.8 0 45.3l192 192z"
-                      />
-                    </svg>
+                  <p className="relative w-full h-full flex justify-center items-center text-white text-xs">
                     {digitsEnToFa(entry.first_story)}
                   </p>
                 </div>
                 {/* Modal for this entry */}
                 <dialog id={`modal_${entry.id}_first`} className="modal">
-                  <div className="modal-box w-full h-80 flex flex-col justify-center items-center">
-                    <form 
-                    onSubmit={(e) => e.preventDefault()}
-                    action="" 
-                    className="w-full h-full flex flex-col justify-around items-center">
-                      <EditText 
-                      // style={{ width: '100%', }}
-                      onChange={(e) => 
-                        handleEdit(entry.id, "first_story", e.target.value)
-                      }
-                      id={entry.first_story} 
-                      name={entry.first_story} 
-                      defaultValue={digitsEnToFa(entry.first_story)}
-                      // showEditButton
-                      // editButtonProps={{style: { width: 20 }}}
+                  <div className="w-1/3 h-auto flex flex-col justify-start items-start gap-2 px-2 py-3 bg-white rounded-lg">
+                    <div className="w-full flex justify-between items-center px-2 py-1">
+                      <p
+                        className="text-md font-semibold text-neutral-800"
+                        style={{ fontFamily: "iransans-bold" }}
+                      >
+                        ویرایش محتوا
+                      </p>
+                      <button
+                        className="flex justify-center items-center w-8 h-8 rounded-full bg-neutral-200 shadow-lg"
+                        onClick={() =>
+                          document
+                            .getElementById(`modal_${entry.id}_first`)
+                            .close()
+                        }
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-4 h-4"
+                        >
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                      <p
+                        className="text-md font-semibold text-neutral-600"
+                        style={{ fontFamily: "iransans" }}
+                      >
+                        عنوان:
+                      </p>
+                      <EditText
+                        name={entry.first_story}
+                        defaultValue={entry.first_story}
+                        onSave={({ value }) =>
+                          handleEdit(entry.id, `first_story`, value)
+                        }
                       />
-                      <EditTextarea 
-                      onChange={(e) =>
-                        handleEdit(entry.id, "first_explanation", e.target.value)
-                      }
-                      rows={6}
-                      // className="max-h-full text-right flex"
-                      id={entry.first_explanation}
-                      name={entry.first_explanation}
-                      defaultValue={digitsEnToFa(entry.first_explanation)}
-                      showEditButton
+                    </div>
+                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                      <p
+                        className="text-md font-semibold text-neutral-600"
+                        style={{ fontFamily: "iransans" }}
+                      >
+                        توضیحات:
+                      </p>
+                      <EditTextarea
+                        name={entry.first_explanation}
+                        defaultValue={entry.first_explanation}
+                        onSave={({ value }) =>
+                          handleEdit(entry.id, `first_explanation`, value)
+                        }
                       />
-                      <div className="w-full flex justify-end items-center">
-                        <button
-                              className="w-16 h-11 bg-slate-300 flex justify-center items-center rounded-lg text-black hover:bg-slate-400
-                              outline-none"
-                              onClick={() => {
-                                handleSave(entry.id);
-                                document.getElementById(`modal_${entry.id}_first`).close();
-                              }}
-                            >
-                              بستن
-                        </button>
-                      </div>
-                    </form>
+                    </div>
+                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                      <p
+                        className="text-md font-semibold text-neutral-600"
+                        style={{ fontFamily: "iransans" }}
+                      >
+                        رنگ پس‌زمینه:
+                      </p>
+                      <EditText
+                        name={entry.first_color}
+                        defaultValue={entry.first_color}
+                        onSave={({ value }) =>
+                          handleEdit(entry.id, `first_color`, value)
+                        }
+                      />
+                    </div>
+                    <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
+                      <button
+                        className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
+                        style={{ fontFamily: "iransans" }}
+                        onClick={() => {
+                          handleSave(entry.id);
+                          document
+                            .getElementById(`modal_${entry.id}_first`)
+                            .close();
+                        }}
+                      >
+                        ذخیره
+                      </button>
+                    </div>
                   </div>
                 </dialog>
                 <div
@@ -397,7 +451,7 @@ const ContentCalender = () => {
                   }}
                   onClick={() => openModal(`modal_${entry.id}_second`)}
                 >
-                  <p className="relative w-full h-full flex justify-center items-center text-white text-sm">
+                  <p className="relative w-full h-full flex justify-center items-center text-white text-xs">
                     <svg
                       className="absolute left-2 w-3 h-3"
                       xmlns="http://www.w3.org/2000/svg"
@@ -412,37 +466,98 @@ const ContentCalender = () => {
                   </p>
                 </div>
                 <dialog id={`modal_${entry.id}_second`} className="modal">
-                  <div className="modal-box w-full h-80 flex flex-col justify-center items-center">
-                    <form action="" className="w-full h-full flex flex-col justify-around items-center">
-                      <EditText 
-                      // style={{ width: '100%', }}
-                      id={entry.second_story} 
-                      name={entry.second_story} 
-                      defaultValue={digitsEnToFa(entry.second_story)}
-                      // showEditButton
-                      // editButtonProps={{style: { width: 20 }}}
+                  <div className="w-1/3 h-auto flex flex-col justify-start items-start gap-2 px-2 py-3 bg-white rounded-lg">
+                    <div className="w-full flex justify-between items-center px-2 py-1">
+                      <p
+                        className="text-md font-semibold text-neutral-800"
+                        style={{ fontFamily: "iransans-bold" }}
+                      >
+                        ویرایش محتوا
+                      </p>
+                      <button
+                        className="flex justify-center items-center w-8 h-8 rounded-full bg-neutral-200 shadow-lg"
+                        onClick={() =>
+                          document
+                            .getElementById(`modal_${entry.id}_second`)
+                            .close()
+                        }
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-4 h-4"
+                        >
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                      <p
+                        className="text-md font-semibold text-neutral-600"
+                        style={{ fontFamily: "iransans" }}
+                      >
+                        عنوان:
+                      </p>
+                      <EditText
+                        inputClassName="bg-transparent outline-none"
+                        name={entry.second_story}
+                        defaultValue={entry.second_story}
+                        onSave={({ value }) =>
+                          handleEdit(entry.id, `second_story`, value)
+                        }
                       />
-                      <EditTextarea 
-                      rows={6}
-                      // className="max-h-full text-right flex"
-                      id={entry.second_explanation}
-                      name={entry.second_explanation}
-                      defaultValue={digitsEnToFa(entry.second_explanation)}
-                      showEditButton
+                    </div>
+                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                      <p
+                        className="text-md font-semibold text-neutral-600"
+                        style={{ fontFamily: "iransans" }}
+                      >
+                        توضیحات:
+                      </p>
+                      <EditTextarea
+                        inputClassName="bg-transparent outline-none"
+                        name={entry.second_story}
+                        defaultValue={entry.second_explanation}
+                        onSave={({ value }) =>
+                          handleEdit(entry.id, `second_explanation`, value)
+                        }
                       />
-                      <div className="w-full flex justify-end items-center">
-                        <button
-                              className="w-16 h-11 bg-slate-300 flex justify-center items-center rounded-lg text-black hover:bg-slate-400
-                              outline-none"
-                              onClick={(e) => {
-                                e.preventDefault(); // Prevent default behavior
-                                document.getElementById(`modal_${entry.id}_second`).close();
-                              }}
-                            >
-                              بستن
-                        </button>
-                      </div>
-                    </form>
+                    </div>
+                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                      <p
+                        className="text-md font-semibold text-neutral-600"
+                        style={{ fontFamily: "iransans" }}
+                      >
+                        رنگ پس‌زمینه:
+                      </p>
+                      <EditText
+                        name={entry.second_color}
+                        defaultValue={entry.second_color}
+                        onSave={({ value }) =>
+                          handleEdit(entry.id, `second_color`, value)
+                        }
+                      />
+                    </div>
+                    <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
+                      <button
+                        className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
+                        style={{ fontFamily: "iransans" }}
+                        onClick={() => {
+                          handleSave(entry.id);
+                          document
+                            .getElementById(`modal_${entry.id}_second`)
+                            .close();
+                        }}
+                      >
+                        ذخیره
+                      </button>
+                    </div>
                   </div>
                 </dialog>
                 <div
@@ -452,7 +567,7 @@ const ContentCalender = () => {
                   }}
                   onClick={() => openModal(`modal_${entry.id}_third`)}
                 >
-                  <p className="relative w-full h-full flex justify-center items-center text-white text-sm">
+                  <p className="relative w-full h-full flex justify-center items-center text-white text-xs">
                     <svg
                       className="absolute left-2 w-3 h-3"
                       xmlns="http://www.w3.org/2000/svg"
@@ -467,38 +582,98 @@ const ContentCalender = () => {
                   </p>
                 </div>
                 <dialog id={`modal_${entry.id}_third`} className="modal">
-                  <div className="modal-box w-full h-80 flex flex-col justify-center items-center">
-                    <form action="" className="w-full h-full flex flex-col justify-around items-center">
-                      <EditText 
-                      // style={{ width: '100%', }}
-                      id={entry.third_story} 
-                      name={entry.third_story} 
-                      defaultValue={digitsEnToFa(entry.third_story)}
-                      // showEditButton
-                      // editButtonProps={{style: { width: 20 }}}
+                  <div className="w-1/3 h-auto flex flex-col justify-start items-start gap-2 px-2 py-3 bg-white rounded-lg">
+                    <div className="w-full flex justify-between items-center px-2 py-1">
+                      <p
+                        className="text-md font-semibold text-neutral-800"
+                        style={{ fontFamily: "iransans-bold" }}
+                      >
+                        ویرایش محتوا
+                      </p>
+                      <button
+                        className="flex justify-center items-center w-8 h-8 rounded-full bg-neutral-200 shadow-lg"
+                        onClick={() =>
+                          document
+                            .getElementById(`modal_${entry.id}_third`)
+                            .close()
+                        }
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-4 h-4"
+                        >
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                      <p
+                        className="text-md font-semibold text-neutral-600"
+                        style={{ fontFamily: "iransans" }}
+                      >
+                        عنوان:
+                      </p>
+                      <EditText
+                        inputClassName="bg-transparent outline-none"
+                        name={entry.third_story}
+                        defaultValue={entry.third_story}
+                        onSave={({ value }) =>
+                          handleEdit(entry.id, `third_story`, value)
+                        }
                       />
-                      <EditTextarea 
-                      rows={6}
-                      // className="max-h-full text-right flex"
-                      id={entry.third_explanation}
-                      name={entry.third_explanation}
-                      defaultValue={digitsEnToFa(entry.third_explanation)}
-                      showEditButton
+                    </div>
+                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                      <p
+                        className="text-md font-semibold text-neutral-600"
+                        style={{ fontFamily: "iransans" }}
+                      >
+                        توضیحات:
+                      </p>
+                      <EditTextarea
+                        inputClassName="bg-transparent outline-none"
+                        name={entry.third_explanation}
+                        defaultValue={entry.third_explanation}
+                        onSave={({ value }) =>
+                          handleEdit(entry.id, `third_explanation`, value)
+                        }
                       />
-                      <div className="w-full flex justify-end items-center">
-                        <button
-                              className="w-16 h-11 bg-slate-300 flex justify-center items-center rounded-lg text-black hover:bg-slate-400
-                              outline-none"
-                              onClick={() =>
-                                document
-                                  .getElementById(`modal_${entry.id}_third`)
-                                  .close()
-                              }
-                            >
-                              بستن
-                        </button>
-                      </div>
-                    </form>
+                    </div>
+                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                      <p
+                        className="text-md font-semibold text-neutral-600"
+                        style={{ fontFamily: "iransans" }}
+                      >
+                        رنگ پس‌زمینه:
+                      </p>
+                      <EditText
+                        name={entry.third_color}
+                        defaultValue={entry.third_color}
+                        onSave={({ value }) =>
+                          handleEdit(entry.id, `third_color`, value)
+                        }
+                      />
+                    </div>
+                    <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
+                      <button
+                        className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
+                        style={{ fontFamily: "iransans" }}
+                        onClick={() => {
+                          handleSave(entry.id);
+                          document
+                            .getElementById(`modal_${entry.id}_third`)
+                            .close();
+                        }}
+                      >
+                        ذخیره
+                      </button>
+                    </div>
                   </div>
                 </dialog>
                 <div
@@ -508,7 +683,7 @@ const ContentCalender = () => {
                   }}
                   onClick={() => openModal(`modal_${entry.id}_fourth`)}
                 >
-                  <p className="relative w-full h-full flex justify-center items-center text-white text-sm">
+                  <p className="relative w-full h-full flex justify-center items-center text-white text-xs">
                     <svg
                       className="absolute left-2 w-3 h-3"
                       xmlns="http://www.w3.org/2000/svg"
@@ -523,37 +698,214 @@ const ContentCalender = () => {
                   </p>
                 </div>
                 <dialog id={`modal_${entry.id}_fourth`} className="modal">
-                  <div className="modal-box w-full h-80 flex flex-col justify-center items-center">
-                    <form action="" className="w-full h-full flex flex-col justify-around items-center">
-                      <EditText 
-                      // style={{ width: '100%', }}
-                      id={entry.fourth_story} 
-                      name={entry.fourth_story} 
-                      defaultValue={digitsEnToFa(entry.fourth_story)}
-                      // showEditButton
-                      // editButtonProps={{style: { width: 20 }}}
+                  <div className="w-1/3 h-auto flex flex-col justify-start items-start gap-2 px-2 py-3 bg-white rounded-lg">
+                    <div className="w-full flex justify-between items-center px-2 py-1">
+                      <p
+                        className="text-md font-semibold text-neutral-800"
+                        style={{ fontFamily: "iransans-bold" }}
+                      >
+                        ویرایش محتوا
+                      </p>
+                      <button
+                        className="flex justify-center items-center w-8 h-8 rounded-full bg-neutral-200 shadow-lg"
+                        onClick={() =>
+                          document
+                            .getElementById(`modal_${entry.id}_fourth`)
+                            .close()
+                        }
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-4 h-4"
+                        >
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                      <p
+                        className="text-md font-semibold text-neutral-600"
+                        style={{ fontFamily: "iransans" }}
+                      >
+                        عنوان:
+                      </p>
+                      <EditText
+                        inputClassName="bg-transparent outline-none"
+                        name={entry.fourth_story}
+                        defaultValue={entry.fourth_story}
+                        onSave={({ value }) =>
+                          handleEdit(entry.id, `fourth_story`, value)
+                        }
                       />
-                      <EditTextarea 
-                      rows={6}
-                      // className="max-h-full text-right flex"
-                      id={entry.fourth_explanation}
-                      name={entry.fourth_explanation}
-                      defaultValue={digitsEnToFa(entry.fourth_explanation)}
-                      showEditButton
+                    </div>
+                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                      <p
+                        className="text-md font-semibold text-neutral-600"
+                        style={{ fontFamily: "iransans" }}
+                      >
+                        توضیحات:
+                      </p>
+                      <EditTextarea
+                        inputClassName="bg-transparent outline-none"
+                        name={entry.fourth_explanation}
+                        defaultValue={entry.fourth_explanation}
+                        onSave={({ value }) =>
+                          handleEdit(entry.id, `fourth_explanation`, value)
+                        }
                       />
-                      <div className="w-full flex justify-end items-center">
-                        <button
-                              className="w-16 h-11 bg-slate-300 flex justify-center items-center rounded-lg text-black hover:bg-slate-400
-                              outline-none"
-                              onClick={(e) => {
-                                e.preventDefault(); // Prevent default behavior
-                                document.getElementById(`modal_${entry.id}_fourth`).close();
-                              }}
-                            >
-                              بستن
-                        </button>
-                      </div>
-                    </form>
+                    </div>
+                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                      <p
+                        className="text-md font-semibold text-neutral-600"
+                        style={{ fontFamily: "iransans" }}
+                      >
+                        رنگ پس‌زمینه:
+                      </p>
+                      <EditText
+                        name={entry.fourth_color}
+                        defaultValue={entry.fourth_color}
+                        onSave={({ value }) =>
+                          handleEdit(entry.id, `fourth_color`, value)
+                        }
+                      />
+                    </div>
+                    <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
+                      <button
+                        className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
+                        style={{ fontFamily: "iransans" }}
+                        onClick={() => {
+                          handleSave(entry.id);
+                          document
+                            .getElementById(`modal_${entry.id}_fourth`)
+                            .close();
+                        }}
+                      >
+                        ذخیره
+                      </button>
+                    </div>
+                  </div>
+                </dialog>
+                <div
+                  className="flex justify-center items-center rounded-lg w-68 h-10 cursor-pointer"
+                  style={{
+                    background: entry.fourth_color,
+                  }}
+                  onClick={() => openModal(`modal_${entry.id}_five`)}
+                >
+                  <p className="relative w-full h-full flex justify-center items-center text-white text-xs">
+                    <svg
+                      className="absolute left-2 w-3 h-3"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 512 512"
+                    >
+                      <path
+                        fill="#ffffff"
+                        d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"
+                      />
+                    </svg>
+                    {digitsEnToFa(entry.five_story)}
+                  </p>
+                </div>
+                <dialog id={`modal_${entry.id}_five`} className="modal">
+                  <div className="w-1/3 h-auto flex flex-col justify-start items-start gap-2 px-2 py-3 bg-white rounded-lg">
+                    <div className="w-full flex justify-between items-center px-2 py-1">
+                      <p
+                        className="text-md font-semibold text-neutral-800"
+                        style={{ fontFamily: "iransans-bold" }}
+                      >
+                        ویرایش محتوا
+                      </p>
+                      <button
+                        className="flex justify-center items-center w-8 h-8 rounded-full bg-neutral-200 shadow-lg"
+                        onClick={() =>
+                          document
+                            .getElementById(`modal_${entry.id}_five`)
+                            .close()
+                        }
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="w-4 h-4"
+                        >
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                      <p
+                        className="text-md font-semibold text-neutral-600"
+                        style={{ fontFamily: "iransans" }}
+                      >
+                        عنوان:
+                      </p>
+                      <EditText
+                        inputClassName="bg-transparent outline-none"
+                        name={entry.five_story}
+                        defaultValue={entry.five_story}
+                        onSave={({ value }) =>
+                          handleEdit(entry.id, `five_story`, value)
+                        }
+                      />
+                    </div>
+                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                      <p
+                        className="text-md font-semibold text-neutral-600"
+                        style={{ fontFamily: "iransans" }}
+                      >
+                        توضیحات:
+                      </p>
+                      <EditTextarea
+                        inputClassName="bg-transparent outline-none"
+                        name={entry.five_explanation}
+                        defaultValue={entry.five_explanation}
+                        onSave={({ value }) =>
+                          handleEdit(entry.id, `five_explanation`, value)
+                        }
+                      />
+                    </div>
+                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                      <p
+                        className="text-md font-semibold text-neutral-600"
+                        style={{ fontFamily: "iransans" }}
+                      >
+                        رنگ پس‌زمینه:
+                      </p>
+                      <EditText
+                        name={entry.five_color}
+                        defaultValue={entry.five_color}
+                        onSave={({ value }) =>
+                          handleEdit(entry.id, `five_color`, value)
+                        }
+                      />
+                    </div>
+                    <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
+                      <button
+                        className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
+                        style={{ fontFamily: "iransans" }}
+                        onClick={() => {
+                          handleSave(entry.id);
+                          document
+                            .getElementById(`modal_${entry.id}_five`)
+                            .close();
+                        }}
+                      >
+                        ذخیره
+                      </button>
+                    </div>
                   </div>
                 </dialog>
               </div>

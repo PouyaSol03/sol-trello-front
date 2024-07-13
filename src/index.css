@@ -55,3 +55,6 @@ body {
   box-sizing: border-box;
 }
 
+input {
+  background-color: transparent;
+}
