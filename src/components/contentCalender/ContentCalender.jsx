@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { digitsEnToFa } from "@persian-tools/persian-tools";
+import { EditText, EditTextarea } from "react-edit-text";
+import 'react-edit-text/dist/index.css';
 
 const foodCollections = [
   {
@@ -99,8 +101,8 @@ const companyCollections = [
 
 const ContentCalender = () => {
   const [calenderData, setCalenderData] = useState([]);
-  const [editableContent, setEditableContent] = useState({});
-  const [isEditing, setIsEditing] = useState({});
+  const [editedData, setEditedData] = useState({});
+
 
   useEffect(() => {
     async function fetchData() {
@@ -116,6 +118,40 @@ const ContentCalender = () => {
     }
     fetchData();
   }, []);
+  const openModal = (modalId) => {
+    document.getElementById(modalId).showModal();
+  };
+  const handleEdit = (id, field, value) => {
+    setEditedData((prevData) => ({
+      ...prevData,
+      [id]: {
+        ...prevData[id],
+        [field]: value,
+      },
+    }));
+  };
+  const handleSave = async (id) => {
+    const dataToSave = editedData[id];
+    const res = await fetch(`http://127.0.0.1:8000/api/content/fixed-content/${id}/`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(dataToSave),
+    });
+    if (res.ok) {
+      const updatedItem = await res.json();
+      setCalenderData((prevData) =>
+        prevData.map((item) => (item.id === id ? updatedItem : item))
+      );
+      setEditedData((prevData) => {
+        const { [id]: removed, ...rest } = prevData;
+        return rest;
+      });
+    } else {
+      console.error('Failed to save data');
+    }
+  };
 
   // Get the current day of the month
   const currentDate = new Date();
@@ -161,27 +197,9 @@ const ContentCalender = () => {
     return mapping;
   }, [dayDifference]);
 
-  const openModal = (modalId) => {
-    document.getElementById(modalId).showModal();
-  };
-  const toggleEditMode = (id, storyType) => {
-    setIsEditing((prev) => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        [storyType]: !prev[id]?.[storyType],
-      },
-    }));
-  };
-  const handleContentChange = (id, storyType, newContent) => {
-    setEditableContent((prev) => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        [storyType]: newContent,
-      },
-    }));
-  };
+  
+
+
   return (
     <>
       <section className="w-full h-auto overflow-y-auto px-5">
@@ -330,48 +348,44 @@ const ContentCalender = () => {
                 </div>
                 {/* Modal for this entry */}
                 <dialog id={`modal_${entry.id}_first`} className="modal">
-                  <div className="modal-box">
-                    <form action="" className="w-full h-full">
-                      <h3 className="w-full font-bold text-lg text-black text-right flex justify-between items-center">
-                          {isEditing[entry.id]?.first ? (
-                            <input
-                              type="text"
-                              value={editableContent[entry.id]?.first || entry.first_story}
-                              onChange={(e) => handleContentChange(entry.id, "first", e.target.value)}
-                            />
-                          ) : (
-                            digitsEnToFa(entry.first_story)
-                          )}
-                          <button 
-                          className="outline-none"
-                          type="button"
-                          onClick={() => toggleEditMode(entry.id, "first")}
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 512 512"
+                  <div className="modal-box w-full h-80 flex flex-col justify-center items-center">
+                    <form 
+                    onSubmit={(e) => e.preventDefault()}
+                    action="" 
+                    className="w-full h-full flex flex-col justify-around items-center">
+                      <EditText 
+                      // style={{ width: '100%', }}
+                      onChange={(e) => 
+                        handleEdit(entry.id, "first_story", e.target.value)
+                      }
+                      id={entry.first_story} 
+                      name={entry.first_story} 
+                      defaultValue={digitsEnToFa(entry.first_story)}
+                      // showEditButton
+                      // editButtonProps={{style: { width: 20 }}}
+                      />
+                      <EditTextarea 
+                      onChange={(e) =>
+                        handleEdit(entry.id, "first_explanation", e.target.value)
+                      }
+                      rows={6}
+                      // className="max-h-full text-right flex"
+                      id={entry.first_explanation}
+                      name={entry.first_explanation}
+                      defaultValue={digitsEnToFa(entry.first_explanation)}
+                      showEditButton
+                      />
+                      <div className="w-full flex justify-end items-center">
+                        <button
+                              className="w-16 h-11 bg-slate-300 flex justify-center items-center rounded-lg text-black hover:bg-slate-400
+                              outline-none"
+                              onClick={() => {
+                                handleSave(entry.id);
+                                document.getElementById(`modal_${entry.id}_first`).close();
+                              }}
                             >
-                              <path d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z" />
-                            </svg>
-                          </button>
-                      </h3>
-                      <p className="py-4">
-                        {digitsEnToFa(entry.first_explanation)}
-                      </p>
-                      <div className="modal-action">
-                        <form method="dialog">
-                          <button
-                            className="bg-blue-300 px-4 py-2 rounded-lg text-white hover:bg-blue-500"
-                            onClick={() =>
-                              document
-                                .getElementById(`modal_${entry.id}_first`)
-                                .close()
-                            }
-                          >
-                            بستن
-                          </button>
-                        </form>
+                              بستن
+                        </button>
                       </div>
                     </form>
                   </div>
@@ -398,27 +412,35 @@ const ContentCalender = () => {
                   </p>
                 </div>
                 <dialog id={`modal_${entry.id}_second`} className="modal">
-                  <div className="modal-box">
-                    <form action="" className="w-full h-full">
-                      <h3 className="font-bold text-lg">
-                        {digitsEnToFa(entry.second_story)}
-                      </h3>
-                      <p className="py-4">
-                        {digitsEnToFa(entry.second_explanation)}
-                      </p>
-                      <div className="modal-action">
-                        <form method="dialog">
-                          <button
-                            className="btn"
-                            onClick={() =>
-                              document
-                                .getElementById(`modal_${entry.id}_second`)
-                                .close()
-                            }
-                          >
-                            بستن
-                          </button>
-                        </form>
+                  <div className="modal-box w-full h-80 flex flex-col justify-center items-center">
+                    <form action="" className="w-full h-full flex flex-col justify-around items-center">
+                      <EditText 
+                      // style={{ width: '100%', }}
+                      id={entry.second_story} 
+                      name={entry.second_story} 
+                      defaultValue={digitsEnToFa(entry.second_story)}
+                      // showEditButton
+                      // editButtonProps={{style: { width: 20 }}}
+                      />
+                      <EditTextarea 
+                      rows={6}
+                      // className="max-h-full text-right flex"
+                      id={entry.second_explanation}
+                      name={entry.second_explanation}
+                      defaultValue={digitsEnToFa(entry.second_explanation)}
+                      showEditButton
+                      />
+                      <div className="w-full flex justify-end items-center">
+                        <button
+                              className="w-16 h-11 bg-slate-300 flex justify-center items-center rounded-lg text-black hover:bg-slate-400
+                              outline-none"
+                              onClick={(e) => {
+                                e.preventDefault(); // Prevent default behavior
+                                document.getElementById(`modal_${entry.id}_second`).close();
+                              }}
+                            >
+                              بستن
+                        </button>
                       </div>
                     </form>
                   </div>
@@ -445,27 +467,36 @@ const ContentCalender = () => {
                   </p>
                 </div>
                 <dialog id={`modal_${entry.id}_third`} className="modal">
-                  <div className="modal-box">
-                    <form action="" className="w-full h-full">
-                      <h3 className="font-bold text-lg">
-                        {digitsEnToFa(entry.third_story)}
-                      </h3>
-                      <p className="py-4">
-                        {digitsEnToFa(entry.third_explanation)}
-                      </p>
-                      <div className="modal-action">
-                        <form method="dialog">
-                          <button
-                            className="btn"
-                            onClick={() =>
-                              document
-                                .getElementById(`modal_${entry.id}_third`)
-                                .close()
-                            }
-                          >
-                            بستن
-                          </button>
-                        </form>
+                  <div className="modal-box w-full h-80 flex flex-col justify-center items-center">
+                    <form action="" className="w-full h-full flex flex-col justify-around items-center">
+                      <EditText 
+                      // style={{ width: '100%', }}
+                      id={entry.third_story} 
+                      name={entry.third_story} 
+                      defaultValue={digitsEnToFa(entry.third_story)}
+                      // showEditButton
+                      // editButtonProps={{style: { width: 20 }}}
+                      />
+                      <EditTextarea 
+                      rows={6}
+                      // className="max-h-full text-right flex"
+                      id={entry.third_explanation}
+                      name={entry.third_explanation}
+                      defaultValue={digitsEnToFa(entry.third_explanation)}
+                      showEditButton
+                      />
+                      <div className="w-full flex justify-end items-center">
+                        <button
+                              className="w-16 h-11 bg-slate-300 flex justify-center items-center rounded-lg text-black hover:bg-slate-400
+                              outline-none"
+                              onClick={() =>
+                                document
+                                  .getElementById(`modal_${entry.id}_third`)
+                                  .close()
+                              }
+                            >
+                              بستن
+                        </button>
                       </div>
                     </form>
                   </div>
@@ -475,7 +506,7 @@ const ContentCalender = () => {
                   style={{
                     background: entry.fourth_color,
                   }}
-                  onClick={() => openModal(`modal_${entry.id}`)}
+                  onClick={() => openModal(`modal_${entry.id}_fourth`)}
                 >
                   <p className="relative w-full h-full flex justify-center items-center text-white text-sm">
                     <svg
@@ -491,28 +522,36 @@ const ContentCalender = () => {
                     {digitsEnToFa(entry.fourth_story)}
                   </p>
                 </div>
-                <dialog id={`modal_${entry.id}`} className="modal">
-                  <div className="modal-box">
-                    <form action="" className="w-full h-full">
-                      <h3 className="font-bold text-lg">
-                        {digitsEnToFa(entry.fourth_story)}
-                      </h3>
-                      <p className="py-4">
-                        {digitsEnToFa(entry.fourth_explanation)}
-                      </p>
-                      <div className="modal-action">
-                        <form method="dialog">
-                          <button
-                            className="btn"
-                            onClick={() =>
-                              document
-                                .getElementById(`modal_${entry.id}`)
-                                .close()
-                            }
-                          >
-                            بستن
-                          </button>
-                        </form>
+                <dialog id={`modal_${entry.id}_fourth`} className="modal">
+                  <div className="modal-box w-full h-80 flex flex-col justify-center items-center">
+                    <form action="" className="w-full h-full flex flex-col justify-around items-center">
+                      <EditText 
+                      // style={{ width: '100%', }}
+                      id={entry.fourth_story} 
+                      name={entry.fourth_story} 
+                      defaultValue={digitsEnToFa(entry.fourth_story)}
+                      // showEditButton
+                      // editButtonProps={{style: { width: 20 }}}
+                      />
+                      <EditTextarea 
+                      rows={6}
+                      // className="max-h-full text-right flex"
+                      id={entry.fourth_explanation}
+                      name={entry.fourth_explanation}
+                      defaultValue={digitsEnToFa(entry.fourth_explanation)}
+                      showEditButton
+                      />
+                      <div className="w-full flex justify-end items-center">
+                        <button
+                              className="w-16 h-11 bg-slate-300 flex justify-center items-center rounded-lg text-black hover:bg-slate-400
+                              outline-none"
+                              onClick={(e) => {
+                                e.preventDefault(); // Prevent default behavior
+                                document.getElementById(`modal_${entry.id}_fourth`).close();
+                              }}
+                            >
+                              بستن
+                        </button>
                       </div>
                     </form>
                   </div>
