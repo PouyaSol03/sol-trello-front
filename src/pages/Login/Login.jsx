@@ -10,16 +10,26 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
     try {
-      const response = await axios.post("http://localhost:8000/api/login/", {
+      const response = await axios.post("http://127.0.0.1:8000/api/login/", {
         username,
         password,
       });
-      const token = response.data.token;
-      localStorage.setItem("token", token);
-      navigate("/dashboard");
-    } catch (err) {
-      setError("نام کاربری و یا رمز عبور شما اشتباه می‌باشد");
+
+      if (response.status === 200) {
+        const { access, username, is_staff } = response.data; // Extract is_staff from response
+        localStorage.setItem("token", access);
+        localStorage.setItem("username", username);
+        localStorage.setItem("is_staff", is_staff); // Store is_staff in local storage
+        navigate("/dashboard");
+      } else {
+        throw new Error("Login failed");
+      }
+    } catch (error) {
+      console.error("Error during login:", error);
+      setError("نام کاربری یا رمز عبور اشتباه است");
     }
   };
 
@@ -35,10 +45,7 @@ const Login = () => {
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
+              <label htmlFor="username" className="block text-sm font-medium leading-6 text-gray-900">
                 نام کاربری
               </label>
               <div className="mt-2">
@@ -52,24 +59,10 @@ const Login = () => {
                 />
               </div>
             </div>
-
             <div>
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  رمز عبور
-                </label>
-                {/* <div className="text-sm">
-                  <a
-                    href="#"
-                    className="font-semibold text-indigo-600 hover:text-indigo-500"
-                  >
-                    فراموشی رمز عبور؟
-                  </a>
-                </div> */}
-              </div>
+              <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
+                رمز عبور
+              </label>
               <div className="mt-2">
                 <input
                   type="password"
@@ -81,25 +74,15 @@ const Login = () => {
                 />
               </div>
             </div>
-
             <div>
               <button
                 type="submit"
-                className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500"
               >
                 ورود
               </button>
             </div>
           </form>
-          {/* <p className="mt-10 text-center text-sm text-gray-500">
-            حساب کاربری ندارید؟
-            <a
-              href="/register"
-              className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
-            >
-              ثبت‌نام کنید
-            </a>
-          </p> */}
         </div>
       </div>
     </main>

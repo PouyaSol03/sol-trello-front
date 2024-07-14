@@ -5,15 +5,15 @@ import { ContentCalender } from "../../components/contentCalender/ContentCalende
 import styles from "./Dashboard.module.css";
 import profileImg from "../../assets/image/ProfilePicDefault.jpg";
 import { Page } from "../../components/Page/Page";
-import { jwtDecode } from "jwt-decode";
+import {jwtDecode} from "jwt-decode"; // Import jwt-decode correctly
 
 const Dashboard = () => {
   const [persianTime, setPersianTime] = useState("");
   const [pageNames, setPageNames] = useState([]);
   const [selectedPage, setSelectedPage] = useState("contentCalender");
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState("کاربر");
 
-  // console.log(jwtDecode(toeken))
+  // console.log(jwtDecode(token))
   useEffect(() => {
     const fetchPageNames = async () => {
       try {
@@ -36,18 +36,41 @@ const Dashboard = () => {
 
     return () => clearInterval(intervalId); // Cleanup interval on component unmount
   }, []);
+  // useEffect(() => {
+  //   const token = localStorage.getItem("token");
+  //   console.log("Retrieved token:", token); // Log the token
+  //   if (token && token.split('.').length === 3) {
+  //     try {
+  //       const decoded = jwtDecode(token);
+  //       console.log("Decoded token:", decoded); // Log the decoded token
+  //       if (decoded && decoded.username) {
+  //         setUsername(decoded.username); // Adjust according to your token's structure
+  //       } else {
+  //         console.error("Token does not contain username");
+  //       }
+  //     } catch (error) {
+  //       console.error("Invalid token:", error);
+  //     }
+  //   } else {
+  //     console.error("Token is not valid or does not exist");
+  //   }
+  // }, []);
+
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const storedUsername = localStorage.getItem("username");
+
     if (token && token.split('.').length === 3) {
-      try {
-        const decoded = jwtDecode(token);
-        setUsername(decoded.username); // Adjust according to your token's structure
-      } catch (error) {
-        console.error("Invalid token:", error);
-        setUsername("کاربر");
-      }
+        try {
+            setUsername(storedUsername || "کاربر");
+        } catch (error) {
+            console.error("Invalid token:", error);
+            setUsername("کاربر");
+        }
     }
   }, []);
+
+  
   const updateTime = () => {
     const currentTime = new Date();
     const timeAndDate = moment(currentTime).format("jYYYY/jMM/jDD HH:mm:ss");
@@ -177,7 +200,7 @@ const Dashboard = () => {
                 }}
               />
               <div className="">
-                <p>{username || "کاربر"}</p>
+                <p>{username}</p>
                 {/* <p>برنامه نویس</p> */}
               </div>
             </div>

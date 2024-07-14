@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { digitsEnToFa } from "@persian-tools/persian-tools";
 import { EditText, EditTextarea } from "react-edit-text";
 import "react-edit-text/dist/index.css";
+import { jwtDecode } from "jwt-decode";
 
 const foodCollections = [
   {
@@ -54,11 +55,6 @@ const foodCollections = [
     name: "سالار",
     asDay: 22,
   },
-  {
-    id: 11,
-    name: "بامداد",
-    asDay: 22,
-  },
 ];
 
 const companyCollections = [
@@ -98,10 +94,14 @@ const companyCollections = [
     asDay: 20,
   },
 ];
+//
+// console.log(user ? "User is staff" : "User is not staff");
 
 const ContentCalender = () => {
   const [calenderData, setCalenderData] = useState([]);
   const [editedData, setEditedData] = useState({});
+  const [user, setUser] = useState(false);
+  // console.log(user);
 
   useEffect(() => {
     async function fetchData() {
@@ -117,6 +117,24 @@ const ContentCalender = () => {
     }
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const isStaff = localStorage.getItem("is_staff");
+
+    if (token && token.split(".").length === 3) {
+        try {
+            setUser(isStaff === "true"); // Ensure this is a boolean
+        } catch (error) {
+            console.error("Invalid token:", error);
+            setUser(false);
+        }
+    } else {
+        setUser(false);
+    }
+  }, []);
+
+
   const openModal = (modalId) => {
     document.getElementById(modalId).showModal();
   };
@@ -128,6 +146,7 @@ const ContentCalender = () => {
         [field]: value,
       },
     }));
+    console.log(`Editing ${field} for entry ${id} with value: ${value}`);
   };
   const handleSave = async (id) => {
     const updatedEntry = editedData[id];
@@ -202,6 +221,8 @@ const ContentCalender = () => {
 
     return mapping;
   }, [dayDifference]);
+
+  // if (!calenderData.length) return <p>Loading...</p>;
 
   return (
     <>
@@ -390,13 +411,19 @@ const ContentCalender = () => {
                       >
                         عنوان:
                       </p>
-                      <EditText
-                        name={entry.first_story}
-                        defaultValue={entry.first_story}
-                        onSave={({ value }) =>
-                          handleEdit(entry.id, `first_story`, value)
-                        }
-                      />
+                      {user ? (
+                        <EditText
+                          name={entry.first_story}
+                          defaultValue={entry.first_story}
+                          onSave={({ value }) =>
+                            handleEdit(entry.id, "first_story", value)
+                          }
+                        />
+                      ) : (
+                        <p className="text-sm text-black">
+                          {entry.first_story}
+                        </p>
+                      )}
                     </div>
                     <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
                       <p
@@ -405,43 +432,53 @@ const ContentCalender = () => {
                       >
                         توضیحات:
                       </p>
-                      <EditTextarea
-                        name={entry.first_explanation}
-                        defaultValue={entry.first_explanation}
-                        onSave={({ value }) =>
-                          handleEdit(entry.id, `first_explanation`, value)
-                        }
-                      />
+                      {user ? (
+                        <EditTextarea
+                          name={entry.first_explanation}
+                          defaultValue={entry.first_explanation}
+                          onSave={({ value }) =>
+                            handleEdit(entry.id, "first_explanation", value)
+                          }
+                        />
+                      ) : (
+                        <p className="text-sm text-black">
+                          {entry.first_explanation}
+                        </p>
+                      )}
                     </div>
-                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
-                      <p
-                        className="text-md font-semibold text-neutral-600"
-                        style={{ fontFamily: "iransans" }}
-                      >
-                        رنگ پس‌زمینه:
-                      </p>
-                      <EditText
-                        name={entry.first_color}
-                        defaultValue={entry.first_color}
-                        onSave={({ value }) =>
-                          handleEdit(entry.id, `first_color`, value)
-                        }
-                      />
-                    </div>
-                    <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
-                      <button
-                        className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
-                        style={{ fontFamily: "iransans" }}
-                        onClick={() => {
-                          handleSave(entry.id);
-                          document
-                            .getElementById(`modal_${entry.id}_first`)
-                            .close();
-                        }}
-                      >
-                        ذخیره
-                      </button>
-                    </div>
+                    {user && (
+                      <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                        <p
+                          className="text-md font-semibold text-neutral-600"
+                          style={{ fontFamily: "iransans" }}
+                        >
+                          رنگ پس‌زمینه:
+                        </p>
+                        <EditText
+                          name={entry.first_color}
+                          defaultValue={entry.first_color}
+                          onSave={({ value }) =>
+                            handleEdit(entry.id, "first_color", value)
+                          }
+                        />
+                      </div>
+                    )}
+                    {user && (
+                      <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
+                        <button
+                          className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
+                          style={{ fontFamily: "iransans" }}
+                          onClick={() => {
+                            handleSave(entry.id);
+                            document
+                              .getElementById(`modal_${entry.id}_first`)
+                              .close();
+                          }}
+                        >
+                          ذخیره
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </dialog>
                 <div
@@ -504,14 +541,19 @@ const ContentCalender = () => {
                       >
                         عنوان:
                       </p>
-                      <EditText
-                        inputClassName="bg-transparent outline-none"
-                        name={entry.second_story}
-                        defaultValue={entry.second_story}
-                        onSave={({ value }) =>
-                          handleEdit(entry.id, `second_story`, value)
-                        }
-                      />
+                      {user ? (
+                        <EditText
+                          name={entry.second_story}
+                          defaultValue={entry.second_story}
+                          onSave={({ value }) =>
+                            handleEdit(entry.id, `second_story`, value)
+                          }
+                        />
+                      ) : (
+                        <p className="text-sm text-black">
+                          {entry.second_story}
+                        </p>
+                      )}
                     </div>
                     <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
                       <p
@@ -520,44 +562,55 @@ const ContentCalender = () => {
                       >
                         توضیحات:
                       </p>
-                      <EditTextarea
-                        inputClassName="bg-transparent outline-none"
-                        name={entry.second_story}
-                        defaultValue={entry.second_explanation}
-                        onSave={({ value }) =>
-                          handleEdit(entry.id, `second_explanation`, value)
-                        }
-                      />
+                      {user ? (
+                        <EditTextarea
+                          name={entry.second_explanation}
+                          defaultValue={entry.second_explanation}
+                          onSave={({ value }) =>
+                            handleEdit(entry.id, `second_explanation`, value)
+                          }
+                        />
+                      ) : (
+                        <>
+                          <p className="text-sm text-black">
+                            {entry.second_explanation}
+                          </p>
+                        </>
+                      )}
                     </div>
-                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
-                      <p
-                        className="text-md font-semibold text-neutral-600"
-                        style={{ fontFamily: "iransans" }}
-                      >
-                        رنگ پس‌زمینه:
-                      </p>
-                      <EditText
-                        name={entry.second_color}
-                        defaultValue={entry.second_color}
-                        onSave={({ value }) =>
-                          handleEdit(entry.id, `second_color`, value)
-                        }
-                      />
-                    </div>
-                    <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
-                      <button
-                        className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
-                        style={{ fontFamily: "iransans" }}
-                        onClick={() => {
-                          handleSave(entry.id);
-                          document
-                            .getElementById(`modal_${entry.id}_second`)
-                            .close();
-                        }}
-                      >
-                        ذخیره
-                      </button>
-                    </div>
+                    {user && (
+                      <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                        <p
+                          className="text-md font-semibold text-neutral-600"
+                          style={{ fontFamily: "iransans" }}
+                        >
+                          رنگ پس‌زمینه:
+                        </p>
+                        <EditText
+                          name={entry.second_color}
+                          defaultValue={entry.second_color}
+                          onSave={({ value }) =>
+                            handleEdit(entry.id, `second_color`, value)
+                          }
+                        />
+                      </div>
+                    )}
+                    {user && (
+                      <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
+                        <button
+                          className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
+                          style={{ fontFamily: "iransans" }}
+                          onClick={() => {
+                            handleSave(entry.id);
+                            document
+                              .getElementById(`modal_${entry.id}_second`)
+                              .close();
+                          }}
+                        >
+                          ذخیره
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </dialog>
                 <div
@@ -620,14 +673,22 @@ const ContentCalender = () => {
                       >
                         عنوان:
                       </p>
-                      <EditText
-                        inputClassName="bg-transparent outline-none"
-                        name={entry.third_story}
-                        defaultValue={entry.third_story}
-                        onSave={({ value }) =>
-                          handleEdit(entry.id, `third_story`, value)
-                        }
-                      />
+                      {user ? (
+                        <EditText
+                          inputClassName="bg-transparent outline-none"
+                          name={entry.third_story}
+                          defaultValue={entry.third_story}
+                          onSave={({ value }) =>
+                            handleEdit(entry.id, `third_story`, value)
+                          }
+                        />
+                      ) : (
+                        <>
+                          <p className="text-sm text-black">
+                            {entry.third_story}
+                          </p>
+                        </>
+                      )}
                     </div>
                     <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
                       <p
@@ -636,44 +697,54 @@ const ContentCalender = () => {
                       >
                         توضیحات:
                       </p>
-                      <EditTextarea
-                        inputClassName="bg-transparent outline-none"
-                        name={entry.third_explanation}
-                        defaultValue={entry.third_explanation}
-                        onSave={({ value }) =>
-                          handleEdit(entry.id, `third_explanation`, value)
-                        }
-                      />
+                      {user ? (
+                        <EditTextarea
+                          inputClassName="bg-transparent outline-none"
+                          name={entry.third_explanation}
+                          defaultValue={entry.third_explanation}
+                          onSave={({ value }) =>
+                            handleEdit(entry.id, `third_explanation`, value)
+                          }
+                        />
+                      ) : (
+                        <p className="text-sm text-black">
+                          {entry.third_explanation}
+                        </p>
+                      )}
                     </div>
-                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
-                      <p
-                        className="text-md font-semibold text-neutral-600"
-                        style={{ fontFamily: "iransans" }}
-                      >
-                        رنگ پس‌زمینه:
-                      </p>
-                      <EditText
-                        name={entry.third_color}
-                        defaultValue={entry.third_color}
-                        onSave={({ value }) =>
-                          handleEdit(entry.id, `third_color`, value)
-                        }
-                      />
-                    </div>
-                    <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
-                      <button
-                        className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
-                        style={{ fontFamily: "iransans" }}
-                        onClick={() => {
-                          handleSave(entry.id);
-                          document
-                            .getElementById(`modal_${entry.id}_third`)
-                            .close();
-                        }}
-                      >
-                        ذخیره
-                      </button>
-                    </div>
+                    {user && (
+                      <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                        <p
+                          className="text-md font-semibold text-neutral-600"
+                          style={{ fontFamily: "iransans" }}
+                        >
+                          رنگ پس‌زمینه:
+                        </p>
+                        <EditText
+                          name={entry.third_color}
+                          defaultValue={entry.third_color}
+                          onSave={({ value }) =>
+                            handleEdit(entry.id, `third_color`, value)
+                          }
+                        />
+                      </div>
+                    )}
+                    {user && (
+                      <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
+                        <button
+                          className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
+                          style={{ fontFamily: "iransans" }}
+                          onClick={() => {
+                            handleSave(entry.id);
+                            document
+                              .getElementById(`modal_${entry.id}_third`)
+                              .close();
+                          }}
+                        >
+                          ذخیره
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </dialog>
                 <div
@@ -736,14 +807,20 @@ const ContentCalender = () => {
                       >
                         عنوان:
                       </p>
-                      <EditText
-                        inputClassName="bg-transparent outline-none"
-                        name={entry.fourth_story}
-                        defaultValue={entry.fourth_story}
-                        onSave={({ value }) =>
-                          handleEdit(entry.id, `fourth_story`, value)
-                        }
-                      />
+                      {user ? (
+                        <EditText
+                          inputClassName="bg-transparent outline-none"
+                          name={entry.fourth_story}
+                          defaultValue={entry.fourth_story}
+                          onSave={({ value }) =>
+                            handleEdit(entry.id, `fourth_story`, value)
+                          }
+                        />
+                      ) : (
+                        <p className="text-sm text-black">
+                          {digitsEnToFa(entry.fourth_story)}
+                        </p>
+                      )}
                     </div>
                     <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
                       <p
@@ -752,44 +829,54 @@ const ContentCalender = () => {
                       >
                         توضیحات:
                       </p>
-                      <EditTextarea
-                        inputClassName="bg-transparent outline-none"
-                        name={entry.fourth_explanation}
-                        defaultValue={entry.fourth_explanation}
-                        onSave={({ value }) =>
-                          handleEdit(entry.id, `fourth_explanation`, value)
-                        }
-                      />
+                      {user ? (
+                        <EditTextarea
+                          inputClassName="bg-transparent outline-none"
+                          name={entry.fourth_explanation}
+                          defaultValue={entry.fourth_explanation}
+                          onSave={({ value }) =>
+                            handleEdit(entry.id, `fourth_explanation`, value)
+                          }
+                        />
+                      ) : (
+                        <p className="text-xs text-black">
+                          {entry.fourth_explanation}
+                        </p>
+                      )}
                     </div>
-                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
-                      <p
-                        className="text-md font-semibold text-neutral-600"
-                        style={{ fontFamily: "iransans" }}
-                      >
-                        رنگ پس‌زمینه:
-                      </p>
-                      <EditText
-                        name={entry.fourth_color}
-                        defaultValue={entry.fourth_color}
-                        onSave={({ value }) =>
-                          handleEdit(entry.id, `fourth_color`, value)
-                        }
-                      />
-                    </div>
-                    <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
-                      <button
-                        className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
-                        style={{ fontFamily: "iransans" }}
-                        onClick={() => {
-                          handleSave(entry.id);
-                          document
-                            .getElementById(`modal_${entry.id}_fourth`)
-                            .close();
-                        }}
-                      >
-                        ذخیره
-                      </button>
-                    </div>
+                    {user && (
+                      <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                        <p
+                          className="text-md font-semibold text-neutral-600"
+                          style={{ fontFamily: "iransans" }}
+                        >
+                          رنگ پس‌زمینه:
+                        </p>
+                        <EditText
+                          name={entry.fourth_color}
+                          defaultValue={entry.fourth_color}
+                          onSave={({ value }) =>
+                            handleEdit(entry.id, `fourth_color`, value)
+                          }
+                        />
+                      </div>
+                    )}
+                    {user && (
+                      <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
+                        <button
+                          className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
+                          style={{ fontFamily: "iransans" }}
+                          onClick={() => {
+                            handleSave(entry.id);
+                            document
+                              .getElementById(`modal_${entry.id}_fourth`)
+                              .close();
+                          }}
+                        >
+                          ذخیره
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </dialog>
                 <div
@@ -852,14 +939,18 @@ const ContentCalender = () => {
                       >
                         عنوان:
                       </p>
-                      <EditText
-                        inputClassName="bg-transparent outline-none"
-                        name={entry.five_story}
-                        defaultValue={entry.five_story}
-                        onSave={({ value }) =>
-                          handleEdit(entry.id, `five_story`, value)
-                        }
-                      />
+                      {user ? (
+                        <EditText
+                          inputClassName="bg-transparent outline-none"
+                          name={entry.five_story}
+                          defaultValue={entry.five_story}
+                          onSave={({ value }) =>
+                            handleEdit(entry.id, `five_story`, value)
+                          }
+                        />
+                      ) : (
+                        <p className="text-xs text-black">{entry.five_story}</p>
+                      )}
                     </div>
                     <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
                       <p
@@ -868,44 +959,56 @@ const ContentCalender = () => {
                       >
                         توضیحات:
                       </p>
-                      <EditTextarea
-                        inputClassName="bg-transparent outline-none"
-                        name={entry.five_explanation}
-                        defaultValue={entry.five_explanation}
-                        onSave={({ value }) =>
-                          handleEdit(entry.id, `five_explanation`, value)
-                        }
-                      />
+                      {user ? (
+                        <EditTextarea
+                          inputClassName="bg-transparent outline-none"
+                          name={entry.five_explanation}
+                          defaultValue={entry.five_explanation}
+                          onSave={({ value }) =>
+                            handleEdit(entry.id, `five_explanation`, value)
+                          }
+                        />
+                      ) : (
+                        <>
+                          <p className="text-xs text-black">
+                            {entry.five_explanation}
+                          </p>
+                        </>
+                      )}
                     </div>
-                    <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
-                      <p
-                        className="text-md font-semibold text-neutral-600"
-                        style={{ fontFamily: "iransans" }}
-                      >
-                        رنگ پس‌زمینه:
-                      </p>
-                      <EditText
-                        name={entry.five_color}
-                        defaultValue={entry.five_color}
-                        onSave={({ value }) =>
-                          handleEdit(entry.id, `five_color`, value)
-                        }
-                      />
-                    </div>
-                    <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
-                      <button
-                        className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
-                        style={{ fontFamily: "iransans" }}
-                        onClick={() => {
-                          handleSave(entry.id);
-                          document
-                            .getElementById(`modal_${entry.id}_five`)
-                            .close();
-                        }}
-                      >
-                        ذخیره
-                      </button>
-                    </div>
+                    {user && (
+                      <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
+                        <p
+                          className="text-md font-semibold text-neutral-600"
+                          style={{ fontFamily: "iransans" }}
+                        >
+                          رنگ پس‌زمینه:
+                        </p>
+                        <EditText
+                          name={entry.five_color}
+                          defaultValue={entry.five_color}
+                          onSave={({ value }) =>
+                            handleEdit(entry.id, `five_color`, value)
+                          }
+                        />
+                      </div>
+                    )}
+                    {user && (
+                      <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
+                        <button
+                          className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
+                          style={{ fontFamily: "iransans" }}
+                          onClick={() => {
+                            handleSave(entry.id);
+                            document
+                              .getElementById(`modal_${entry.id}_five`)
+                              .close();
+                          }}
+                        >
+                          ذخیره
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </dialog>
               </div>
