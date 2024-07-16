@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import moment from "moment-jalaali";
 import { digitsEnToFa } from "@persian-tools/persian-tools";
-import { ContentCalender } from "../../components/contentCalender/ContentCalender";
+import { ContentCalendar } from "../../components/contentCalender/ContentCalender";
 import styles from "./Dashboard.module.css";
 import profileImg from "../../assets/image/ProfilePicDefault.jpg";
 import { Page } from "../../components/Page/Page";
@@ -18,7 +18,7 @@ const Dashboard = () => {
     const fetchPageNames = async () => {
       try {
         const response = await fetch(
-          "http://127.0.0.1:8000/api/content/name-page/"
+          "https://apisoltrello.liara.run/api/content/name-page/"
         );
         if (!response.ok) {
           throw new Error("Failed to fetch page names");
@@ -208,7 +208,7 @@ const Dashboard = () => {
         </aside>
         <main className="w-full h-full bg-slate-50 rounded-2xl p-1 shadow-2xl">
           <div className="h-full overflow-y-auto">
-            {selectedPage === "contentCalender" && <ContentCalender />}
+            {selectedPage === "contentCalender" && <ContentCalendar />}
             {pageNames.map((page, index) => (
               selectedPage === page.name && (
                 <div className="h-full" key={index}>

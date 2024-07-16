@@ -1,8 +1,12 @@
 import { useState, useEffect, useMemo } from "react";
-import { digitsEnToFa } from "@persian-tools/persian-tools";
+// import { digitsEnToFa } from "@persian-tools/persian-tools";
 import { EditText, EditTextarea } from "react-edit-text";
 import "react-edit-text/dist/index.css";
 import { jwtDecode } from "jwt-decode";
+// import { Dropdown } from "../Dropdown/Dropdown";
+import axios from "axios";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 
 const foodCollections = [
   {
@@ -47,7 +51,7 @@ const foodCollections = [
   },
   {
     id: 9,
-    name: "چه جیگری",
+    name: "چه جگری",
     asDay: 21,
   },
   {
@@ -94,51 +98,81 @@ const companyCollections = [
     asDay: 20,
   },
 ];
-//
-// console.log(user ? "User is staff" : "User is not staff");
 
-const ContentCalender = () => {
-  const [calenderData, setCalenderData] = useState([]);
+const ContentCalendar = () => {
+  const [calendarData, setCalendarData] = useState([]);
   const [editedData, setEditedData] = useState({});
   const [user, setUser] = useState(false);
-  // console.log(user);
+  const [menuItems, setMenuItems] = useState([]);
+  const [hexToIdMap, setHexToIdMap] = useState({});
+  const [idToHexMap, setIdToHexMap] = useState({});
+
+  // Calculate day difference
+  const currentDate = new Date();
+  const currentDay = currentDate.getDate();
+  const referenceDate = new Date("2024-07-06");
+  const dayDifference = (currentDay - referenceDate.getDate() + 26) % 26;
+
+  // Fetch background color options
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/api/content/bg-color/");
+        const result = await res.json();
+        setMenuItems(result);
+        const hexMap = {};
+        const idMap = {};
+        result.forEach((item) => {
+          hexMap[item.hex_value] = item.id;
+          idMap[item.id] = item.hex_value;
+        });
+        setHexToIdMap(hexMap);
+        setIdToHexMap(idMap);
+      } catch (error) {
+        console.error("Error fetching menu items:", error);
+      }
+    };
+    fetchMenuItems();
+  }, []);
 
   useEffect(() => {
-    async function fetchData() {
-      const res = await fetch(
-        "http://127.0.0.1:8000/api/content/fixed-content/"
-      );
-      const result = await res.json();
-
-      // Sort the result by 'day'
-      result.sort((a, b) => a.day - b.day);
-
-      setCalenderData(result);
-    }
-    fetchData();
+    const fetchCalendarData = async () => {
+      try {
+        const res = await fetch(
+          "http://127.0.0.1:8000/api/content/fixed-content/"
+        );
+        const result = await res.json();
+        result.sort((a, b) => a.day - b.day);
+        setCalendarData(result);
+      } catch (error) {
+        console.error("Error fetching calendar data:", error);
+      }
+    };
+    fetchCalendarData();
   }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     const isStaff = localStorage.getItem("is_staff");
-
-    if (token && token.split(".").length === 3) {
-        try {
-            setUser(isStaff === "true"); // Ensure this is a boolean
-        } catch (error) {
-            console.error("Invalid token:", error);
-            setUser(false);
-        }
-    } else {
-        setUser(false);
-    }
+    setUser(token && token.split(".").length === 3 && isStaff === "true");
   }, []);
 
+  const handleColorSelect = (id, field, hexValue) => {
+    setEditedData((prevData) => ({
+      ...prevData,
+      [id]: {
+        ...prevData[id],
+        [field]: hexValue, // Store hex value here
+      },
+    }));
+  };
 
   const openModal = (modalId) => {
     document.getElementById(modalId).showModal();
   };
+
   const handleEdit = (id, field, value) => {
+    console.log(`Editing ${field} for entry ${id} with value: ${value}`);
     setEditedData((prevData) => ({
       ...prevData,
       [id]: {
@@ -146,11 +180,26 @@ const ContentCalender = () => {
         [field]: value,
       },
     }));
-    console.log(`Editing ${field} for entry ${id} with value: ${value}`);
   };
+
   const handleSave = async (id) => {
     const updatedEntry = editedData[id];
     if (updatedEntry) {
+      // Convert hex codes to IDs using hexToIdMap for all color fields
+      const dataToSave = { ...updatedEntry };
+      const colorFields = [
+        "first_color",
+        "second_color",
+        "third_color",
+        "fourth_color",
+        "five_color",
+      ];
+      colorFields.forEach((field) => {
+        if (dataToSave[field] && hexToIdMap[dataToSave[field]]) {
+          dataToSave[field] = hexToIdMap[dataToSave[field]];
+        }
+      });
+
       try {
         const response = await fetch(
           `http://127.0.0.1:8000/api/content/fixed-content/${id}/`,
@@ -159,16 +208,20 @@ const ContentCalender = () => {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify(updatedEntry),
+            body: JSON.stringify(dataToSave),
           }
         );
 
         if (response.ok) {
-          setCalenderData((prev) =>
+          setCalendarData((prev) =>
             prev.map((entry) =>
-              entry.id === id ? { ...entry, ...updatedEntry } : entry
+              entry.id === id ? { ...entry, ...dataToSave } : entry
             )
           );
+          setEditedData((prevData) => ({
+            ...prevData,
+            [id]: {}, // Clear the edited data for the saved entry
+          }));
         } else {
           console.error("Failed to save data");
         }
@@ -178,25 +231,12 @@ const ContentCalender = () => {
     }
   };
 
-  // Get the current day of the month
-  const currentDate = new Date();
-  const currentDay = currentDate.getDate();
-
-  // Reference day (e.g., the day the code was written)
-  const referenceDate = new Date("2024-07-06"); // Replace with your reference date
-  const referenceDay = referenceDate.getDate();
-
-  // Calculate the difference in days
-  const dayDifference = (currentDay - referenceDay + 26) % 26; // Ensure non-negative and wrap around 26 days
-
-  // Create a mapping of days to collection names
   const dayToCollectionNames = useMemo(() => {
     const mapping = { food: {}, company: {}, both: {} };
 
     const addToMapping = (collections, type) => {
       collections.forEach((collection) => {
-        // Calculate the new day based on the day difference
-        const adjustedDay = ((collection.asDay + dayDifference - 1) % 26) + 1; // Ensure 1-based day within 26 days
+        const adjustedDay = ((collection.asDay + dayDifference - 1) % 26) + 1;
         if (!mapping[type][adjustedDay]) {
           mapping[type][adjustedDay] = [];
         }
@@ -207,7 +247,6 @@ const ContentCalender = () => {
     addToMapping(foodCollections, "food");
     addToMapping(companyCollections, "company");
 
-    // Find overlaps
     Object.keys(mapping.food).forEach((day) => {
       if (mapping.company[day]) {
         mapping.both[day] = {
@@ -221,8 +260,6 @@ const ContentCalender = () => {
 
     return mapping;
   }, [dayDifference]);
-
-  // if (!calenderData.length) return <p>Loading...</p>;
 
   return (
     <>
@@ -245,7 +282,7 @@ const ContentCalender = () => {
               <p className="w-auto text-xs"></p>
             </div>
             <div
-              className="flex justify-center items-center rounded-lg w-12 h-10"
+              className="flex justify-center items-center rounded-lg w-12 h-10 hidden"
               style={{
                 background: "#161c40",
                 // width: "30px",
@@ -313,7 +350,7 @@ const ContentCalender = () => {
           </div>
         </div>
         <div className="w-full h-auto flex flex-col justify-start items-center mt-2 gap-1">
-          {calenderData.map((entry) => {
+          {calendarData.map((entry) => {
             const isFoodDay = dayToCollectionNames.food[entry.day];
             const isCompanyDay = dayToCollectionNames.company[entry.day];
             const isBothDay = dayToCollectionNames.both[entry.day];
@@ -325,15 +362,20 @@ const ContentCalender = () => {
                   isBothDay
                     ? "bg-green-300"
                     : isFoodDay
-                    ? "bg-rose-300"
+                    ? "shadow-[inset_0px_0px_20px_1px_#00000024]"
                     : isCompanyDay
-                    ? "bg-blue-300"
-                    : ""
+                    ? "shadow-[inset_0px_0px_20px_1px_#00000024]"
+                    : "hidden"
                 }`}
               >
-                <div className="flex justify-center items-center w-48 h-10 p-2 bg-transparent text-black">
+                <div
+                  className="flex justify-center items-center w-48 h-10 p-2 text-white rounded-lg"
+                  style={{
+                    background: "#161c40",
+                  }}
+                >
                   <p
-                    className="w-auto text-black"
+                    className="w-auto text-white"
                     style={{
                       fontFamily: "iransans-black",
                       fontSize: "14px",
@@ -353,22 +395,23 @@ const ContentCalender = () => {
                   </p>
                 </div>
                 <div
-                  className="flex justify-center items-center rounded-lg w-12 h-10 text-white"
+                  className="flex justify-center items-center rounded-lg w-12 h-10 text-white hidden"
                   style={{
                     background: "#161c40",
                   }}
                 >
-                  <p className="text-sm">{digitsEnToFa(entry.day)}</p>
+                  <p className="text-sm">{entry.day}</p>
                 </div>
                 <div
                   className="flex justify-center items-center rounded-lg w-68 h-10 cursor-pointer"
                   style={{
-                    background: entry.first_color,
+                    background:
+                      idToHexMap[entry.first_color] || entry.first_color,
                   }}
                   onClick={() => openModal(`modal_${entry.id}_first`)}
                 >
-                  <p className="relative w-full h-full flex justify-center items-center text-white text-xs">
-                    {digitsEnToFa(entry.first_story)}
+                  <p className="relative w-full h-full flex justify-center items-center text-black text-xs">
+                    {entry.first_story}
                   </p>
                 </div>
                 {/* Modal for this entry */}
@@ -448,19 +491,40 @@ const ContentCalender = () => {
                     </div>
                     {user && (
                       <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
-                        <p
-                          className="text-md font-semibold text-neutral-600"
-                          style={{ fontFamily: "iransans" }}
+                        <Menu
+                          as="div"
+                          className="relative inline-block text-right"
                         >
-                          رنگ پس‌زمینه:
-                        </p>
-                        <EditText
-                          name={entry.first_color}
-                          defaultValue={entry.first_color}
-                          onSave={({ value }) =>
-                            handleEdit(entry.id, "first_color", value)
-                          }
-                        />
+                          <MenuButton className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            انتخاب رنگ پس زمینه
+                            <ChevronDownIcon
+                              aria-hidden="true"
+                              className="-mr-1 h-5 w-5 text-gray-400"
+                            />
+                          </MenuButton>
+                          <MenuItems className="bg-slate-200 shadow-lg rounded-lg h-auto z-10">
+                            {menuItems.map((item) => (
+                              <MenuItem key={item.id}>
+                                {({ active }) => (
+                                  <div
+                                    className={`block px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-slate-100 ${
+                                      active ? "bg-slate-100" : ""
+                                    }`}
+                                    onClick={() =>
+                                      handleColorSelect(
+                                        entry.id,
+                                        "first_color",
+                                        item.hex_value
+                                      )
+                                    } // Use hex_value
+                                  >
+                                    {item.name}
+                                  </div>
+                                )}
+                              </MenuItem>
+                            ))}
+                          </MenuItems>
+                        </Menu>
                       </div>
                     )}
                     {user && (
@@ -484,7 +548,8 @@ const ContentCalender = () => {
                 <div
                   className="flex justify-center items-center rounded-lg w-68 h-10 cursor-pointer"
                   style={{
-                    background: entry.second_color,
+                    background:
+                      idToHexMap[entry.second_color] || entry.second_color,
                   }}
                   onClick={() => openModal(`modal_${entry.id}_second`)}
                 >
@@ -499,7 +564,7 @@ const ContentCalender = () => {
                         d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"
                       />
                     </svg>
-                    {digitsEnToFa(entry.second_story)}
+                    {entry.second_story}
                   </p>
                 </div>
                 <dialog id={`modal_${entry.id}_second`} className="modal">
@@ -546,7 +611,7 @@ const ContentCalender = () => {
                           name={entry.second_story}
                           defaultValue={entry.second_story}
                           onSave={({ value }) =>
-                            handleEdit(entry.id, `second_story`, value)
+                            handleEdit(entry.id, "second_story", value)
                           }
                         />
                       ) : (
@@ -567,36 +632,55 @@ const ContentCalender = () => {
                           name={entry.second_explanation}
                           defaultValue={entry.second_explanation}
                           onSave={({ value }) =>
-                            handleEdit(entry.id, `second_explanation`, value)
+                            handleEdit(entry.id, "second_explanation", value)
                           }
                         />
                       ) : (
-                        <>
-                          <p className="text-sm text-black">
-                            {entry.second_explanation}
-                          </p>
-                        </>
+                        <p className="text-sm text-black">
+                          {entry.second_explanation}
+                        </p>
                       )}
                     </div>
                     {user && (
                       <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
-                        <p
-                          className="text-md font-semibold text-neutral-600"
-                          style={{ fontFamily: "iransans" }}
+                        <Menu
+                          as="div"
+                          className="relative inline-block text-right"
                         >
-                          رنگ پس‌زمینه:
-                        </p>
-                        <EditText
-                          name={entry.second_color}
-                          defaultValue={entry.second_color}
-                          onSave={({ value }) =>
-                            handleEdit(entry.id, `second_color`, value)
-                          }
-                        />
+                          <MenuButton className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            انتخاب رنگ پس زمینه
+                            <ChevronDownIcon
+                              aria-hidden="true"
+                              className="-mr-1 h-5 w-5 text-gray-400"
+                            />
+                          </MenuButton>
+                          <MenuItems className="bg-slate-200 shadow-lg rounded-lg h-auto z-10">
+                            {menuItems.map((item) => (
+                              <MenuItem key={item.id}>
+                                {({ active }) => (
+                                  <div
+                                    className={`block px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-slate-100 ${
+                                      active ? "bg-slate-100" : ""
+                                    }`}
+                                    onClick={() =>
+                                      handleColorSelect(
+                                        entry.id,
+                                        "second_color",
+                                        item.hex_value
+                                      )
+                                    } // Use hex_value
+                                  >
+                                    {item.name}
+                                  </div>
+                                )}
+                              </MenuItem>
+                            ))}
+                          </MenuItems>
+                        </Menu>
                       </div>
                     )}
                     {user && (
-                      <div className="w-full flex justify-center items-center px-2 py-2 gap-3">
+                      <div className="w-full flex justifycenter items-center px-2 py-2 gap-3">
                         <button
                           className="flex justify-center items-center w-auto h-10 px-6 bg-rose-400 hover:bg-rose-500 rounded-md text-white text-sm"
                           style={{ fontFamily: "iransans" }}
@@ -616,7 +700,8 @@ const ContentCalender = () => {
                 <div
                   className="flex justify-center items-center rounded-lg w-68 h-10 cursor-pointer"
                   style={{
-                    background: entry.third_color,
+                    background:
+                      idToHexMap[entry.third_color] || entry.third_color,
                   }}
                   onClick={() => openModal(`modal_${entry.id}_third`)}
                 >
@@ -631,7 +716,7 @@ const ContentCalender = () => {
                         d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"
                       />
                     </svg>
-                    {digitsEnToFa(entry.third_story)}
+                    {entry.third_story}
                   </p>
                 </div>
                 <dialog id={`modal_${entry.id}_third`} className="modal">
@@ -675,19 +760,16 @@ const ContentCalender = () => {
                       </p>
                       {user ? (
                         <EditText
-                          inputClassName="bg-transparent outline-none"
                           name={entry.third_story}
                           defaultValue={entry.third_story}
                           onSave={({ value }) =>
-                            handleEdit(entry.id, `third_story`, value)
+                            handleEdit(entry.id, "third_story", value)
                           }
                         />
                       ) : (
-                        <>
-                          <p className="text-sm text-black">
-                            {entry.third_story}
-                          </p>
-                        </>
+                        <p className="text-sm text-black">
+                          {entry.third_story}
+                        </p>
                       )}
                     </div>
                     <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
@@ -699,11 +781,10 @@ const ContentCalender = () => {
                       </p>
                       {user ? (
                         <EditTextarea
-                          inputClassName="bg-transparent outline-none"
                           name={entry.third_explanation}
                           defaultValue={entry.third_explanation}
                           onSave={({ value }) =>
-                            handleEdit(entry.id, `third_explanation`, value)
+                            handleEdit(entry.id, "third_explanation", value)
                           }
                         />
                       ) : (
@@ -714,19 +795,40 @@ const ContentCalender = () => {
                     </div>
                     {user && (
                       <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
-                        <p
-                          className="text-md font-semibold text-neutral-600"
-                          style={{ fontFamily: "iransans" }}
+                        <Menu
+                          as="div"
+                          className="relative inline-block text-right"
                         >
-                          رنگ پس‌زمینه:
-                        </p>
-                        <EditText
-                          name={entry.third_color}
-                          defaultValue={entry.third_color}
-                          onSave={({ value }) =>
-                            handleEdit(entry.id, `third_color`, value)
-                          }
-                        />
+                          <MenuButton className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            انتخاب رنگ پس زمینه
+                            <ChevronDownIcon
+                              aria-hidden="true"
+                              className="-mr-1 h-5 w-5 text-gray-400"
+                            />
+                          </MenuButton>
+                          <MenuItems className="bg-slate-200 shadow-lg rounded-lg h-auto z-10">
+                            {menuItems.map((item) => (
+                              <MenuItem key={item.id}>
+                                {({ active }) => (
+                                  <div
+                                    className={`block px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-slate-100 ${
+                                      active ? "bg-slate-100" : ""
+                                    }`}
+                                    onClick={() =>
+                                      handleColorSelect(
+                                        entry.id,
+                                        "third_color",
+                                        item.hex_value
+                                      )
+                                    } // Use hex_value
+                                  >
+                                    {item.name}
+                                  </div>
+                                )}
+                              </MenuItem>
+                            ))}
+                          </MenuItems>
+                        </Menu>
                       </div>
                     )}
                     {user && (
@@ -750,7 +852,8 @@ const ContentCalender = () => {
                 <div
                   className="flex justify-center items-center rounded-lg w-68 h-10 cursor-pointer"
                   style={{
-                    background: entry.fourth_color,
+                    background:
+                      idToHexMap[entry.fourth_color] || entry.fourth_color,
                   }}
                   onClick={() => openModal(`modal_${entry.id}_fourth`)}
                 >
@@ -765,7 +868,7 @@ const ContentCalender = () => {
                         d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"
                       />
                     </svg>
-                    {digitsEnToFa(entry.fourth_story)}
+                    {entry.fourth_story}
                   </p>
                 </div>
                 <dialog id={`modal_${entry.id}_fourth`} className="modal">
@@ -809,16 +912,15 @@ const ContentCalender = () => {
                       </p>
                       {user ? (
                         <EditText
-                          inputClassName="bg-transparent outline-none"
                           name={entry.fourth_story}
                           defaultValue={entry.fourth_story}
                           onSave={({ value }) =>
-                            handleEdit(entry.id, `fourth_story`, value)
+                            handleEdit(entry.id, "fourth_story", value)
                           }
                         />
                       ) : (
                         <p className="text-sm text-black">
-                          {digitsEnToFa(entry.fourth_story)}
+                          {entry.fourth_story}
                         </p>
                       )}
                     </div>
@@ -831,11 +933,10 @@ const ContentCalender = () => {
                       </p>
                       {user ? (
                         <EditTextarea
-                          inputClassName="bg-transparent outline-none"
                           name={entry.fourth_explanation}
                           defaultValue={entry.fourth_explanation}
                           onSave={({ value }) =>
-                            handleEdit(entry.id, `fourth_explanation`, value)
+                            handleEdit(entry.id, "fourth_explanation", value)
                           }
                         />
                       ) : (
@@ -846,19 +947,40 @@ const ContentCalender = () => {
                     </div>
                     {user && (
                       <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
-                        <p
-                          className="text-md font-semibold text-neutral-600"
-                          style={{ fontFamily: "iransans" }}
+                        <Menu
+                          as="div"
+                          className="relative inline-block text-right"
                         >
-                          رنگ پس‌زمینه:
-                        </p>
-                        <EditText
-                          name={entry.fourth_color}
-                          defaultValue={entry.fourth_color}
-                          onSave={({ value }) =>
-                            handleEdit(entry.id, `fourth_color`, value)
-                          }
-                        />
+                          <MenuButton className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            انتخاب رنگ پس زمینه
+                            <ChevronDownIcon
+                              aria-hidden="true"
+                              className="-mr-1 h-5 w-5 text-gray-400"
+                            />
+                          </MenuButton>
+                          <MenuItems className="bg-slate-200 shadow-lg rounded-lg h-auto z-10">
+                            {menuItems.map((item) => (
+                              <MenuItem key={item.id}>
+                                {({ active }) => (
+                                  <div
+                                    className={`block px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-slate-100 ${
+                                      active ? "bg-slate-100" : ""
+                                    }`}
+                                    onClick={() =>
+                                      handleColorSelect(
+                                        entry.id,
+                                        "fourth_color",
+                                        item.hex_value
+                                      )
+                                    } // Use hex_value
+                                  >
+                                    {item.name}
+                                  </div>
+                                )}
+                              </MenuItem>
+                            ))}
+                          </MenuItems>
+                        </Menu>
                       </div>
                     )}
                     {user && (
@@ -882,7 +1004,8 @@ const ContentCalender = () => {
                 <div
                   className="flex justify-center items-center rounded-lg w-68 h-10 cursor-pointer"
                   style={{
-                    background: entry.fourth_color,
+                    background:
+                      idToHexMap[entry.five_color] || entry.five_color,
                   }}
                   onClick={() => openModal(`modal_${entry.id}_five`)}
                 >
@@ -897,7 +1020,7 @@ const ContentCalender = () => {
                         d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"
                       />
                     </svg>
-                    {digitsEnToFa(entry.five_story)}
+                    {entry.five_story}
                   </p>
                 </div>
                 <dialog id={`modal_${entry.id}_five`} className="modal">
@@ -941,11 +1064,10 @@ const ContentCalender = () => {
                       </p>
                       {user ? (
                         <EditText
-                          inputClassName="bg-transparent outline-none"
                           name={entry.five_story}
                           defaultValue={entry.five_story}
                           onSave={({ value }) =>
-                            handleEdit(entry.id, `five_story`, value)
+                            handleEdit(entry.id, "five_story", value)
                           }
                         />
                       ) : (
@@ -961,36 +1083,54 @@ const ContentCalender = () => {
                       </p>
                       {user ? (
                         <EditTextarea
-                          inputClassName="bg-transparent outline-none"
                           name={entry.five_explanation}
                           defaultValue={entry.five_explanation}
                           onSave={({ value }) =>
-                            handleEdit(entry.id, `five_explanation`, value)
+                            handleEdit(entry.id, "five_explanation", value)
                           }
                         />
                       ) : (
-                        <>
-                          <p className="text-xs text-black">
-                            {entry.five_explanation}
-                          </p>
-                        </>
+                        <p className="text-xs text-black">
+                          {entry.five_explanation}
+                        </p>
                       )}
                     </div>
                     {user && (
                       <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
-                        <p
-                          className="text-md font-semibold text-neutral-600"
-                          style={{ fontFamily: "iransans" }}
+                        <Menu
+                          as="div"
+                          className="relative inline-block text-right"
                         >
-                          رنگ پس‌زمینه:
-                        </p>
-                        <EditText
-                          name={entry.five_color}
-                          defaultValue={entry.five_color}
-                          onSave={({ value }) =>
-                            handleEdit(entry.id, `five_color`, value)
-                          }
-                        />
+                          <MenuButton className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            انتخاب رنگ پس زمینه
+                            <ChevronDownIcon
+                              aria-hidden="true"
+                              className="-mr-1 h-5 w-5 text-gray-400"
+                            />
+                          </MenuButton>
+                          <MenuItems className="bg-slate-200 shadow-lg rounded-lg h-auto z-10">
+                            {menuItems.map((item) => (
+                              <MenuItem key={item.id}>
+                                {({ active }) => (
+                                  <div
+                                    className={`block px-4 py-2 text-sm text-gray-700 cursor-pointer hover:bg-slate-100 ${
+                                      active ? "bg-slate-100" : ""
+                                    }`}
+                                    onClick={() =>
+                                      handleColorSelect(
+                                        entry.id,
+                                        "five_color",
+                                        item.hex_value
+                                      )
+                                    } // Use hex_value
+                                  >
+                                    {item.name}
+                                  </div>
+                                )}
+                              </MenuItem>
+                            ))}
+                          </MenuItems>
+                        </Menu>
                       </div>
                     )}
                     {user && (
@@ -1020,4 +1160,4 @@ const ContentCalender = () => {
   );
 };
 
-export { ContentCalender };
+export { ContentCalendar };

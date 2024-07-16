@@ -9,7 +9,7 @@ const ContentPage = ({ pageName }) => {
     const fetchContentData = async () => {
       try {
         const response = await axios.get(
-          `http://127.0.0.1:8000/api/content/page-content/`,
+          `https://apisoltrello.liara.run/api/content/page-content/`,
           {
             params: { name: pageName },
           }
