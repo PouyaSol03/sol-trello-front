@@ -117,7 +117,7 @@ const ContentCalendar = () => {
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/content/bg-color/");
+        const res = await fetch("https://apisoltrello.liara.run/api/content/bg-color/");
         const result = await res.json();
         setMenuItems(result);
         const hexMap = {};
@@ -139,7 +139,7 @@ const ContentCalendar = () => {
     const fetchCalendarData = async () => {
       try {
         const res = await fetch(
-          "http://127.0.0.1:8000/api/content/fixed-content/"
+          "https://apisoltrello.liara.run/api/content/fixed-content/"
         );
         const result = await res.json();
         result.sort((a, b) => a.day - b.day);
@@ -202,7 +202,7 @@ const ContentCalendar = () => {
 
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/api/content/fixed-content/${id}/`,
+          `https://apisoltrello.liara.run/api/content/fixed-content/${id}/`,
           {
             method: "PUT",
             headers: {
@@ -365,7 +365,7 @@ const ContentCalendar = () => {
                     ? "shadow-[inset_0px_0px_20px_1px_#00000024]"
                     : isCompanyDay
                     ? "shadow-[inset_0px_0px_20px_1px_#00000024]"
-                    : "hidden"
+                    : "opacity-10"
                 }`}
               >
                 <div
@@ -410,7 +410,7 @@ const ContentCalendar = () => {
                   }}
                   onClick={() => openModal(`modal_${entry.id}_first`)}
                 >
-                  <p className="relative w-full h-full flex justify-center items-center text-black text-xs">
+                  <p className="relative w-full h-full flex justify-center items-center text-white text-xs">
                     {entry.first_story}
                   </p>
                 </div>

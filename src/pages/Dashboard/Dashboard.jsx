@@ -18,7 +18,7 @@ const Dashboard = () => {
     const fetchPageNames = async () => {
       try {
         const response = await fetch(
-          "https://apisoltrello.liara.run/api/content/name-page/"
+          "http://127.0.0.1:8000/api/content/name-page/"
         );
         if (!response.ok) {
           throw new Error("Failed to fetch page names");
