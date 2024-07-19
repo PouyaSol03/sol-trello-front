@@ -4,7 +4,7 @@ import { digitsEnToFa } from "@persian-tools/persian-tools";
 import { ContentCalendar } from "../../components/contentCalender/ContentCalender";
 import styles from "./Dashboard.module.css";
 import profileImg from "../../assets/image/ProfilePicDefault.jpg";
-import { Page } from "../../components/Page/Page";
+import { CollectionPage } from "../../components/Page/CollectionPage";
 import {jwtDecode} from "jwt-decode"; // Import jwt-decode correctly
 
 const Dashboard = () => {
@@ -97,9 +97,9 @@ const Dashboard = () => {
               </h2>
               <hr className="w-full mt-2" />
             </div>
-            <div className="w-full h-full flex flex-col justify-center items-center gap-1">
+            <div className="w-full h-full flex flex-col justify-start items-center gap-1">
               <div
-                className="w-full flex justify-start items-center gap-2 hover:bg-slate-200 cursor-pointer"
+                className="mt-3 w-full flex justify-start items-center gap-2 hover:bg-slate-200 cursor-pointer"
                 style={{
                   padding: "5px",
                   borderRadius: "6px",
@@ -157,37 +157,8 @@ const Dashboard = () => {
                     </clipPath>
                   </defs>
                 </svg>
-                <p>برنامه محتوایی</p>
+                <p>برنامه محتوایی کل</p>
               </div>
-              {pageNames.map((page, index) => (
-                <div
-                  key={index}
-                  className="flex justify-start items-center gap-2 w-full hover:bg-slate-200 cursor-pointer"
-                  style={{
-                    padding: "5px",
-                    borderRadius: "6px",
-                  }}
-                  onClick={() => setSelectedPage(page.name)}
-                >
-                  <img
-                    src={page.imageUrl}
-                    alt={page.name}
-                    style={{
-                      width: "24px",
-                      height: "24px",
-                      borderRadius: "50%",
-                    }}
-                  />
-                  <p
-                    style={{
-                      fontSize: "16px",
-                      marginLeft: "8px",
-                    }}
-                  >
-                    {page.name}
-                  </p>
-                </div>
-              ))}
             </div>
             <div className="w-full h-14 flex justify-start items-center gap-3">
               <img
@@ -207,15 +178,8 @@ const Dashboard = () => {
           </div>
         </aside>
         <main className="w-full h-full bg-slate-50 rounded-2xl p-1 shadow-2xl">
-          <div className="h-full overflow-y-auto">
-            {selectedPage === "contentCalender" && <ContentCalendar />}
-            {pageNames.map((page, index) => (
-              selectedPage === page.name && (
-                <div className="h-full" key={index}>
-                  <Page pageName={page.name} />                  
-                </div>
-              )
-            ))}
+          <div className="h-full overflow-y-auto"> 
+            <ContentCalendar/>
           </div>
         </main>
       </section>
