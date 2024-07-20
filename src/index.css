@@ -34,6 +34,7 @@
   box-sizing: border-box;
   font-family: 'iransans' !important;
   overflow: hidden;
+  /* min-height: 100vh; */
 }
 
 body {

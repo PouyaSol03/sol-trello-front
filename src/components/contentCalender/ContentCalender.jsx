@@ -99,12 +99,12 @@ const companyCollections = [
 ];
 
 const Header = () => (
-  <div className="w-full h-full flex justify-center items-center mt-4">
+  <div className="w-full h-auto flex justify-center items-center mt-4">
     <div className="w-auto h-auto flex justify-start items-center gap-3 bg-transparent py-2 overflow-x-auto px-1">
       <div className="flex justify-center items-center w-48 bg-transparent p-2 minHeight-40 h-auto rounded-lg text-white opacity-50">
         <p className="w-auto text-xs"></p>
       </div>
-      <div className="flex justify-center items-center rounded-lg w-12 h-10 hidden bg-[#161c40] text-white">
+      <div className="flex justify-center items-center rounded-lg w-12 h-10 bg-[#161c40] text-white hidden">
         <p className="text-xs">روز</p>
       </div>
       {['محتوای اول', 'محتوای دوم', 'محتوای سوم', 'محتوای چهارم', 'محتوای پنجم'].map((text, idx) => (
@@ -207,11 +207,11 @@ const ContentEntry = ({ entry, dayToCollectionNames, user, editedData, handleEdi
   ];
 
   return collectionNames.map((name) => (
-    <div key={name} className="w-full h-auto flex justify-start items-center gap-3 rounded-lg px-1 py-2">
+    <div key={name} className="w-full h-auto flex justify-start items-center gap-3 rounded-lg px-1 py-2 bg-green-300">
       <div className="flex justify-center items-center w-48 h-10 p-2 text-white rounded-lg" style={{ background: "#161c40" }}>
         {renderCollectionLink(name)}
       </div>
-      <div className="flex justify-center items-center rounded-lg w-12 h-10 text-white hidden" style={{ background: "#161c40" }}>
+      <div className="flex justify-center items-center rounded-lg w-12 h-10 text-white" style={{ background: "#161c40" }}>
         <p className="text-sm">{entry.day}</p>
       </div>
       {['first', 'second', 'third', 'fourth', 'five'].map((field) => renderContentFields(entry, field, user, handleEdit, handleSave, menuItems, handleColorSelect))}
@@ -363,19 +363,27 @@ const ContentCalendar = () => {
     <section className="w-full h-auto overflow-y-auto overflow-x-auto px-5">
       <Header />
       <div className="w-full h-auto flex flex-col justify-start items-center mt-2 gap-1">
-        {calendarData.map((entry) => (
-          <ContentEntry
-            key={entry.id}
-            entry={entry}
-            dayToCollectionNames={dayToCollectionNames}
-            user={user}
-            editedData={editedData}
-            handleEdit={handleEdit}
-            handleSave={handleSave}
-            menuItems={menuItems}
-            handleColorSelect={handleColorSelect}
-          />
-        ))}
+        {calendarData.map((entry) => {
+          const isFoodDay = dayToCollectionNames.food[entry.day];
+          const isCompanyDay = dayToCollectionNames.company[entry.day];
+          const isBothDay = dayToCollectionNames.both[entry.day];
+
+          if (!isBothDay && !isFoodDay && !isCompanyDay) return null;
+
+          return (
+            <ContentEntry
+              key={entry.id}
+              entry={entry}
+              dayToCollectionNames={dayToCollectionNames}
+              user={user}
+              editedData={editedData}
+              handleEdit={handleEdit}
+              handleSave={handleSave}
+              menuItems={menuItems}
+              handleColorSelect={handleColorSelect}
+            />
+          );
+        })}
       </div>
     </section>
   );
