@@ -207,11 +207,11 @@ const ContentEntry = ({ entry, dayToCollectionNames, user, editedData, handleEdi
   ];
 
   return collectionNames.map((name) => (
-    <div key={name} className="w-full h-auto flex justify-start items-center gap-3 rounded-lg px-1 py-2 bg-green-300">
+    <div key={name} className="w-full h-auto flex justify-start items-center gap-3 rounded-lg px-1 py-2 ">
       <div className="flex justify-center items-center w-48 h-10 p-2 text-white rounded-lg" style={{ background: "#161c40" }}>
         {renderCollectionLink(name)}
       </div>
-      <div className="flex justify-center items-center rounded-lg w-12 h-10 text-white" style={{ background: "#161c40" }}>
+      <div className="flex justify-center items-center rounded-lg w-12 h-10 text-white " style={{ background: "#161c40" }}>
         <p className="text-sm">{entry.day}</p>
       </div>
       {['first', 'second', 'third', 'fourth', 'five'].map((field) => renderContentFields(entry, field, user, handleEdit, handleSave, menuItems, handleColorSelect))}

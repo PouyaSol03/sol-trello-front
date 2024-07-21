@@ -6,8 +6,8 @@ import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 
 const Header = () => (
-  <div className="w-full h-auto flex justify-center items-center">
-    <div className="w-auto h-auto flex justify-start items-center gap-3 bg-transparent py-2 overflow-x-auto px-1">
+  <div className="w-full h-auto flex justify-start items-center px-1 py-2">
+    <div className="w-auto h-auto flex justify-start items-center gap-3 bg-transparent overflow-x-auto">
       <div className="flex justify-center items-center rounded-lg w-12 h-10 bg-[#161c40] text-white">
         <p className="text-xs">روز</p>
       </div>
@@ -52,7 +52,7 @@ const Modal = ({ id, entry, field, user, handleEdit, handleSave, menuItems, hand
         <div className="w-full h-auto flex flex-col justify-start items-start px-2 py-2 gap-3">
           <Menu as="div" className="relative inline-block text-right">
             <MenuButton className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-              انتخاب رنگ پس زمینه
+              انتخاب موضوع
               <ChevronDownIcon aria-hidden="true" className="-mr-1 h-5 w-5 text-gray-400" />
             </MenuButton>
             <MenuItems className="bg-slate-200 shadow-lg rounded-lg h-auto z-10">
@@ -82,13 +82,13 @@ const Modal = ({ id, entry, field, user, handleEdit, handleSave, menuItems, hand
 
 const ContentEntry = ({ entry, user, handleEdit, handleSave, menuItems, handleColorSelect }) => {
   const renderContentFields = (entry, field, user, handleEdit, handleSave, menuItems, handleColorSelect) => {
-    const backgroundColor = entry[`bg_color_${field}`] || '#160000'; // Default to white if color is not defined
-
+    const backgroundColor = entry[`bg_color_${field}`]?.hex_value || '#ffffff'; // Accessing the nested hex_value
+  
     return (
       <div
-        key={field}
+        key={`${entry.id}-${field}`}
         className="flex justify-center items-center rounded-lg w-68 h-10 cursor-pointer"
-        style={{ background: backgroundColor }}
+        style={{ backgroundColor: backgroundColor }} // Correct usage
         onClick={() => openModal(`modal_${entry.id}_${field}`)}
       >
         <p className="relative w-full h-full flex justify-center items-center text-white text-xs">
@@ -106,7 +106,7 @@ const ContentEntry = ({ entry, user, handleEdit, handleSave, menuItems, handleCo
 
   const renderModal = (id, entry, field, user, handleEdit, handleSave, menuItems, handleColorSelect) => (
     <Modal
-      key={field}
+      key={`${id}-${field}`}
       id={id}
       entry={entry}
       field={field}
@@ -120,20 +120,19 @@ const ContentEntry = ({ entry, user, handleEdit, handleSave, menuItems, handleCo
   );
 
   return (
-    <div key={entry.id} className="w-full h-auto flex justify-start items-center gap-3 rounded-lg px-1 py-2">
-      <div className="flex justify-center items-center rounded-lg w-12 h-10 text-white" style={{ background: "#161c40" }}>
+    <div key={entry.id} className="w-full h-auto flex justify-start items-center gap-3 rounded-lg px-1 py-1">
+      <div className="flex justify-center items-center rounded-lg w-12 h-10 text-white" style={{ backgroundColor: "#161c40" }}>
         <p className="text-sm">{entry.day}</p>
       </div>
-      {['first', 'seconde', 'three', 'four', 'five'].map((field) =>
+      {['first', 'seconde', 'thired', 'four', 'five'].map((field) =>
         renderContentFields(entry, field, user, handleEdit, handleSave, menuItems, handleColorSelect)
       )}
-      {['first', 'seconde', 'three', 'four', 'five'].map((field) =>
+      {['first', 'seconde', 'thired', 'four', 'five'].map((field) =>
         renderModal(entry.id, entry, field, user, handleEdit, handleSave, menuItems, handleColorSelect)
       )}
     </div>
   );
 };
-
 
 const ContentPage = () => {
   const { collectionName } = useParams();
@@ -180,7 +179,7 @@ const ContentPage = () => {
       ...prevData,
       [id]: {
         ...prevData[id],
-        [field]: hexValue,
+        [field]: { hex_value: hexValue }, // Update the specific field
       },
     }));
   };
@@ -200,15 +199,18 @@ const ContentPage = () => {
     if (updatedEntry) {
       try {
         const response = await fetch(`http://127.0.0.1:8000/api/content/page-content/${id}/`, {
-          method: "PUT",
+          method: "PATCH", // Use PATCH to partially update
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(updatedEntry),
         });
-
+  
         if (response.ok) {
-          setCalendarData((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...updatedEntry } : entry)));
+          const updatedData = await response.json();
+          setCalendarData((prev) =>
+            prev.map((entry) => (entry.id === id ? { ...entry, ...updatedData } : entry))
+          );
           setEditedData((prevData) => ({
             ...prevData,
             [id]: {},
@@ -223,7 +225,7 @@ const ContentPage = () => {
   };
 
   return (
-    <section className="w-full h-auto overflow-y-auto px-5">
+    <section className="w-full h-auto overflow-y-auto mb-6 px-2">
       <Header />
       {calendarData.map((entry) => (
         <ContentEntry

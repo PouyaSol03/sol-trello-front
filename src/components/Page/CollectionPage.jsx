@@ -56,8 +56,8 @@ const CollectionPage = () => {
       <aside className='w-1/6 h-full bg-white rounded-lg p-4'>
         <h2 className='w-full text-center font-bold'>منوی اختصاصی</h2>
       </aside>
-      <main className='w-full h-full bg-white rounded-lg'>
-        <div className="w-full h-20 flex justify-center items-center gap-4">
+      <main className='w-full h-full bg-white rounded-lg flex flex-col'>
+        <div className="w-full h-auto flex justify-center items-center gap-4 py-4">
           {buttons.map((button) => (
             <button
               key={button.id}
@@ -68,7 +68,7 @@ const CollectionPage = () => {
             </button>
           ))}
         </div>
-        <div className="w-full h-full p-4 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-4">
           {renderContent()}
         </div>
       </main>
