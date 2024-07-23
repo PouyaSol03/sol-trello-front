@@ -1,33 +1,29 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { ContentPage } from '../contentPage/ContentPage';
 import { Gallery } from '../Gallery';
 
-const collectionsContent = {
-  "گرویتی": "Content for گرویتی",
-  "سعیدی": "Content for سعیدی",
-  "آرش": "Content for آرش",
-  "فلاورز": "Content for فلاورز",
-  "سوخاریس": "Content for سوخاریس",
-  "کوچینی": "Content for کوچینی",
-  "کافه یو": "Content for کافه یو",
-  "دییر": "Content for دییر",
-  "چه جگری": "Content for چه جگری",
-  "سالار": "Content for سالار",
-  "کوه‌سر": "Content for کوه‌سر",
-  "سرای حمید": "Content for سرای حمید",
-  "نارمک": "Content for نارمک",
-  "شهرما": "Content for شهرما",
-  "بونیتو": "Content for بونیتو",
-  "چای احمد": "Content for چای احمد",
-  "راشسا": "Content for راشسا"
-};
-
 const CollectionPage = () => {
   const { collectionName } = useParams();
-  const content = collectionsContent[collectionName] || "Content not found";
-
+  const [namePages, setNamePages] = useState([]);
   const [selectedButton, setSelectedButton] = useState(null);
+
+  useEffect(() => {
+    const fetchNamePages = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:8000/api/content/name-page/");
+        if (!response.ok) {
+          throw new Error('Failed to fetch name pages');
+        }
+        const data = await response.json();
+        setNamePages(data);
+      } catch (error) {
+        console.error("Error fetching name pages:", error);
+      }
+    };
+
+    fetchNamePages();
+  }, []);
 
   const buttons = [
     { id: 1, label: 'محتوا اختصاصی' },
@@ -39,13 +35,9 @@ const CollectionPage = () => {
   const renderContent = () => {
     switch (selectedButton) {
       case 1:
-        return <ContentPage content={content} />;
+        return <ContentPage />;
       case 2:
-        return <Gallery content={content} />;
-      // case 3:
-      //   return <ContentPage3 content={content} />;
-      // case 4:
-      //   return <ContentPage4 content={content} />;
+        return <Gallery />;
       default:
         return null;
     }
@@ -55,6 +47,17 @@ const CollectionPage = () => {
     <section className='w-screen h-screen flex justify-center items-center p-3 bg-slate-200 gap-2'>
       <aside className='w-1/6 h-full bg-white rounded-lg p-4'>
         <h2 className='w-full text-center font-bold'>منوی اختصاصی</h2>
+        <div className="mt-4">
+          {namePages.map(page => (
+            <Link
+              key={page.id}
+              to={`/collection/${page.name}`}
+              className={`block w-full text-center p-2 my-1 rounded-lg ${page.name === collectionName ? 'bg-blue-500 text-white' : 'bg-gray-200 text-black'}`}
+            >
+              {page.name}
+            </Link>
+          ))}
+        </div>
       </aside>
       <main className='w-full h-full bg-white rounded-lg flex flex-col'>
         <div className="w-full h-auto flex justify-center items-center gap-4 py-4">

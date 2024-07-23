@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import moment from "moment-jalaali";
 import { digitsEnToFa } from "@persian-tools/persian-tools";
-import { ContentCalendar } from "../../components/contentCalender/ContentCalender";
+import { ContentCalender } from "../../components/contentCalender/ContentCalender";
 import styles from "./Dashboard.module.css";
 import profileImg from "../../assets/image/ProfilePicDefault.jpg";
 import {jwtDecode} from "jwt-decode";
@@ -123,7 +123,7 @@ const Dashboard = () => {
           </div>
         </div> */}
         <div className="h-full overflow-y-auto">
-          <ContentCalendar />
+          <ContentCalender />
         </div>
       </main>
     </section>
