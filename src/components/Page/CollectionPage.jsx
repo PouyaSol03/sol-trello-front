@@ -6,12 +6,12 @@ import { Gallery } from '../Gallery';
 const CollectionPage = () => {
   const { collectionName } = useParams();
   const [namePages, setNamePages] = useState([]);
-  const [selectedButton, setSelectedButton] = useState(null);
+  const [selectedButton, setSelectedButton] = useState(1); // Set default to 1
 
   useEffect(() => {
     const fetchNamePages = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:8000/api/content/name-page/");
+        const response = await fetch("https://apisoltrello.liara.run/api/content/name-page/");
         if (!response.ok) {
           throw new Error('Failed to fetch name pages');
         }

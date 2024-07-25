@@ -259,7 +259,7 @@ const ContentPage = () => {
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8000/api/content/bg-color/");
+        const res = await fetch("https://apisoltrello.liara.run/api/content/bg-color/");
         const data = await res.json();
         setMenuItems(
           data.map((item) => ({
@@ -279,7 +279,7 @@ const ContentPage = () => {
     const fetchCalendarData = async () => {
       try {
         const res = await fetch(
-          `http://127.0.0.1:8000/api/content/page-content/?name=${collectionName}`
+          `https://apisoltrello.liara.run/api/content/page-content/?name=${collectionName}`
         );
         const result = await res.json();
         result.sort((a, b) => a.day - b.day);
@@ -322,7 +322,7 @@ const ContentPage = () => {
     if (updatedEntry) {
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/api/content/page-content/${id}/`,
+          `https://apisoltrello.liara.run/api/content/page-content/${id}/`,
           {
             method: "PUT",
             headers: {

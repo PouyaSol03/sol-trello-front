@@ -1,10 +1,19 @@
 import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { EditText, EditTextarea } from "react-edit-text";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import jalaali from "jalaali-js";
+import { Link } from "react-router-dom";
 
 const Header = () => (
   <div className="w-full h-auto flex justify-center items-center px-1 py-2">
     <div className="w-auto h-auto flex justify-start items-center gap-3 bg-transparent overflow-x-auto">
-      <div className="flex justify-center items-center rounded-lg w-36 h-10 bg-transparent text-white">
+      <div className="flex justify-center items-center rounded-lg w-24 h-10 bg-transparent text-white">
         <p className="text-sm"></p>
+      </div>
+      <div className="flex justify-center items-center rounded-lg w-12 h-10 bg-[#161c40] text-white">
+        <p className="text-sm">روز</p>
       </div>
       {[
         "محتوای اول",
@@ -136,19 +145,245 @@ const Modal = ({
   </dialog>
 );
 
+const ContentEntry = ({
+  entry,
+  user,
+  handleEdit,
+  handleSave,
+  menuItems,
+  handleColorSelect,
+}) => {
+  const renderContentFields = (
+    entry,
+    field,
+    user,
+    handleEdit,
+    handleSave,
+    menuItems,
+    handleColorSelect
+  ) => {
+    const backgroundColor = entry[`bg_color_${field}_hex`] || ""; // Accessing the nested hex_value
 
+    return (
+      <div
+        key={`${entry.id}-${field}`}
+        className="flex justify-center items-center rounded-lg w-68 h-10 cursor-pointer"
+        style={{ backgroundColor: backgroundColor }} // Correct usage
+        onClick={() => openModal(`modal_${entry.id}_${field}`)}
+      >
+        <p className="relative w-full h-full flex justify-center items-center text-white text-xs">
+          <svg
+            className="absolute left-2 w-3 h-3"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 512 512"
+          >
+            <path
+              fill="#ffffff"
+              d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"
+            />
+          </svg>
+          {entry[`title_${field}_content`]}
+        </p>
+      </div>
+    );
+  };
 
-const ContentCalender = () => {
+  const openModal = (modalId) => document.getElementById(modalId).showModal();
+  const closeModal = (modalId) => document.getElementById(modalId).close();
 
+  const renderModal = (
+    id,
+    entry,
+    field,
+    user,
+    handleEdit,
+    handleSave,
+    menuItems,
+    handleColorSelect
+  ) => (
+    <Modal
+      key={`${id}-${field}`}
+      id={id}
+      entry={entry}
+      field={field}
+      user={user}
+      handleEdit={handleEdit}
+      handleSave={handleSave}
+      menuItems={menuItems}
+      handleColorSelect={handleColorSelect}
+      closeModal={() => closeModal(`modal_${id}_${field}`)}
+    />
+  );
 
-  return(
+  return (
+    <div
+      key={entry.id}
+      className="w-full h-auto flex justify-start items-center gap-3 rounded-lg px-1 py-1"
+    >
+      <Link
+        to={`/collection/${entry.name.name}`}
+        className="flex justify-center items-center rounded-lg w-24 h-10 text-white"
+        style={{ backgroundColor: "#161c40" }}
+      >
+        <p className="text-sm">{entry.name.name}</p> {/* Access nested name */}
+      </Link>
+      <div className="flex justify-center items-center rounded-lg w-12 h-10 bg-[#161c40] text-white">
+        <p className="text-sm">{entry.day}</p>
+      </div>
+      {["first", "seconde", "thired", "four", "five"].map((field) =>
+        renderContentFields(
+          entry,
+          field,
+          user,
+          handleEdit,
+          handleSave,
+          menuItems,
+          handleColorSelect
+        )
+      )}
+      {["first", "seconde", "thired", "four", "five"].map((field) =>
+        renderModal(
+          entry.id,
+          entry,
+          field,
+          user,
+          handleEdit,
+          handleSave,
+          menuItems,
+          handleColorSelect
+        )
+      )}
+    </div>
+  );
+};
+
+const ContentCalendar = () => {
+  const { collectionName } = useParams();
+  const [calendarData, setCalendarData] = useState([]);
+  const [user, setUser] = useState(false);
+  const [menuItems, setMenuItems] = useState([]);
+  const [editedData, setEditedData] = useState({});
+
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      try {
+        const res = await fetch("https://apisoltrello.liara.run/api/content/bg-color/");
+        const data = await res.json();
+        setMenuItems(
+          data.map((item) => ({
+            id: item.id,
+            name: item.name,
+            hexValue: item.hex_value,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching menu items:", error);
+      }
+    };
+    fetchMenuItems();
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(
+          `https://apisoltrello.liara.run/api/content/page-content/`
+        );
+        const data = await res.json();
+        console.log("Main content data:", data); // Log the main content data to check structure
+
+        // Get current day in the Jalali calendar
+        const today = new Date();
+        const { jd } = jalaali.toJalaali(today);
+        const currentDay = ((jd - 1) % 26) + 1;
+
+        // Filter data to include only entries matching the current day
+        const filteredData = data.filter(entry => entry.day == currentDay);
+
+        setCalendarData(filteredData);
+      } catch (error) {
+        console.error("Error fetching calendar data:", error);
+      }
+    };
+    fetchData();
+  }, [collectionName]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const isStaff = localStorage.getItem("is_staff");
+    setUser(token && token.split(".").length === 3 && isStaff === "true");
+  }, []);
+
+  const handleColorSelect = (id, field, colorId) => {
+    setEditedData((prevData) => ({
+      ...prevData,
+      [id]: {
+        ...prevData[id],
+        [field]: colorId, // This should be the color ID
+      },
+    }));
+  };
+
+  const handleEdit = (id, field, value) => {
+    setEditedData((prevData) => ({
+      ...prevData,
+      [id]: {
+        ...prevData[id],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleSave = async (id) => {
+    const updatedEntry = editedData[id];
+    if (updatedEntry) {
+      try {
+        const response = await fetch(
+          `https://apisoltrello.liara.run/api/content/page-content/${id}/`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updatedEntry),
+          }
+        );
+
+        if (response.ok) {
+          const updatedData = await response.json();
+          setCalendarData((prev) =>
+            prev.map((entry) =>
+              entry.id === id ? { ...entry, ...updatedData } : entry
+            )
+          );
+          setEditedData((prevData) => ({ ...prevData, [id]: {} }));
+        } else {
+          console.error("Failed to save data");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    }
+  };
+
+  return (
     <>
-      <section className="w-full h-auto overflow-y-auto p-4">
-        <Header/>
-        w
+      <section className="w-full h-auto overflow-y-auto mb-6 px-2">
+        <Header />
+        {calendarData.map((entry) => (
+          <ContentEntry
+            key={entry.id}
+            entry={entry}
+            user={user}
+            handleEdit={handleEdit} // Implement or pass these functions
+            handleSave={handleSave}
+            menuItems={menuItems}
+            handleColorSelect={handleColorSelect}
+          />
+        ))}
       </section>
     </>
-  )
-}
+  );
+};
 
-export { ContentCalender }
+export { ContentCalendar };

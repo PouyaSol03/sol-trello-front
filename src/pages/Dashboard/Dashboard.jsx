@@ -1,48 +1,62 @@
 import React, { useState, useEffect } from "react";
 import moment from "moment-jalaali";
 import { digitsEnToFa } from "@persian-tools/persian-tools";
-import { ContentCalender } from "../../components/contentCalender/ContentCalender";
+import { ContentCalendar } from "../../components/contentCalender/ContentCalender";
 import styles from "./Dashboard.module.css";
 import profileImg from "../../assets/image/ProfilePicDefault.jpg";
 import {jwtDecode} from "jwt-decode";
+import { OldContent } from "../../components/OldContent/OldContent";
+import { CollectionPage } from "../../components/Page/CollectionPage";
 
 const Dashboard = () => {
   const [persianTime, setPersianTime] = useState("");
-  const [pageNames, setPageNames] = useState([]);
-  const [selectedPage, setSelectedPage] = useState("contentCalender");
-  const [username, setUsername] = useState("کاربر");
+  // const [pageNames, setPageNames] = useState([]);
+  const [selectedPage, setSelectedPage] = useState("oldTotalContent");
+  const [username, setUsername] = useState("");
 
-  useEffect(() => {
-    const fetchPageNames = async () => {
-      try {
-        const response = await fetch("http://127.0.0.1:8000/api/content/name-page/");
-        if (!response.ok) {
-          throw new Error("Failed to fetch page names");
-        }
-        const data = await response.json();
-        setPageNames(data); // Assuming data is an array of objects with name and imageUrl
-      } catch (error) {
-        console.error("Error fetching page names:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchPageNames = async () => {
+  //     try {
+  //       const response = await fetch("http://127.0.0.1:8000/api/content/name-page/");
+  //       if (!response.ok) {
+  //         throw new Error("Failed to fetch page names");
+  //       }
+  //       const data = await response.json();
+  //       setPageNames(data); // Assuming data is an array of objects with name and imageUrl
+  //     } catch (error) {
+  //       console.error("Error fetching page names:", error);
+  //     }
+  //   };
 
-    fetchPageNames();
+  //   fetchPageNames();
 
-    const intervalId = setInterval(updateTime, 1000); // Update time every second
+  //   const intervalId = setInterval(updateTime, 1000); // Update time every second
 
-    return () => clearInterval(intervalId); // Cleanup interval on component unmount
-  }, []);
+  //   return () => clearInterval(intervalId); // Cleanup interval on component unmount
+  // }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    console.log("Token:", token); // Log the token for debugging
+
     if (token && token.split('.').length === 3) {
       try {
         const decoded = jwtDecode(token);
-        setUsername(decoded.username || "کاربر");
+        console.log("Decoded token:", decoded); // Log the decoded token for debugging
+
+        // If the token is a simple string like "admin", set username directly
+        if (typeof decoded === "string") {
+          setUsername(decoded);
+        } else {
+          setUsername(decoded.username || "کاربر");
+        }
       } catch (error) {
         console.error("Invalid token:", error);
         setUsername("کاربر");
       }
+    } else {
+      // Handle case where token is not a JWT but a simple string
+      setUsername(token || "کاربر");
     }
   }, []);
 
@@ -51,6 +65,17 @@ const Dashboard = () => {
     const timeAndDate = moment(currentTime).format("jYYYY/jMM/jDD HH:mm:ss");
     const formattedTime = digitsEnToFa(timeAndDate);
     setPersianTime(formattedTime);
+  };
+
+  const renderContent = () => {
+    switch (selectedPage) {
+      case "oldTotalContent":
+        return <OldContent />;
+      case "newTotalContent":
+        return <ContentCalendar />;
+      default:
+        return <OldContent />;
+    }
   };
 
   return (
@@ -68,33 +93,25 @@ const Dashboard = () => {
           </div>
           <div className="w-full h-full flex flex-col justify-start items-center gap-1">
             <div
-              className="mt-3 w-full flex justify-start items-center gap-2 hover:bg-slate-200 cursor-pointer"
+              className={`mt-3 w-full flex justify-start items-center gap-2 cursor-pointer ${
+                selectedPage === "oldTotalContent" ? "bg-blue-400 text-white" : "hover:bg-slate-200"
+              }`}
               style={{ padding: "5px", borderRadius: "6px" }}
-              onClick={() => setSelectedPage("contentCalender")}
+              onClick={() => setSelectedPage("oldTotalContent")}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 14 14" fill="none">
-                <g clipPath="url(#clip0_1222_37349)">
-                  <path d="M0.5 1H5" stroke="black" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M0.5 4H5" stroke="black" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M0.5 7H5" stroke="black" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M0.5 13H13.5" stroke="black" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M0.5 10H13.5" stroke="black" strokeLinecap="round" strokeLinejoin="round" />
-                  <path
-                    d="M8 7H13C13.2761 7 13.5 6.77614 13.5 6.5V1.5C13.5 1.22386 13.2761 1 13 1H8C7.72386 1 7.5 1.22386 7.5 1.5V6.5C7.5 6.77614 7.72386 7 8 7Z"
-                    stroke="black"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </g>
-                <defs>
-                  <clipPath id="clip0_1222_37349">
-                    <rect width="14" height="14" fill="white" />
-                  </clipPath>
-                </defs>
-              </svg>
-              <p>برنامه محتوایی کل</p>
+              <p>محتوا قدیمی</p>
+            </div>
+            <div
+              className={`mt-3 w-full flex justify-start items-center gap-2 cursor-pointer ${
+                selectedPage === "newTotalContent" ? "bg-blue-400 text-white" : "hover:bg-slate-200"
+              }`}
+              style={{ padding: "5px", borderRadius: "6px" }}
+              onClick={() => setSelectedPage("newTotalContent")}
+            >
+              <p>محتوا جدید</p>
             </div>
           </div>
+
           <div className="w-full h-14 flex justify-start items-center gap-3">
             <img
               className="w-14 h-full rounded-full"
@@ -109,21 +126,8 @@ const Dashboard = () => {
         </div>
       </aside>
       <main className="w-full h-full bg-slate-50 rounded-2xl p-1 shadow-2xl">
-        {/* <div className="w-full h-16 flex justify-start items-center px-4">
-          <div className="w-1/4 dropdown">
-            <div className="w-40 flex items-center justify-center bg-slate-400 rounded-lg">
-              <select className="w-full h-10 rounded-lg outline-none ">
-                {pageNames.map((page) => (
-                  <option key={page.name} value={page.name}>
-                    {page.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div> */}
         <div className="h-full overflow-y-auto">
-          <ContentCalender />
+          {renderContent()}
         </div>
       </main>
     </section>
