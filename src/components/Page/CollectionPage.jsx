@@ -45,9 +45,9 @@ const CollectionPage = () => {
 
   return (
     <section className='w-screen h-screen flex justify-center items-center p-3 bg-slate-200 gap-2'>
-      <aside className='w-1/6 h-full bg-white rounded-lg p-4'>
+      <aside className='w-1/6 h-full bg-white rounded-lg py-4'>
         <h2 className='w-full text-center font-bold'>منوی اختصاصی</h2>
-        <div className="mt-4">
+        <div className="mt-4 w-full h-90 overflow-y-auto px-3">
           {namePages.map(page => (
             <Link
               key={page.id}

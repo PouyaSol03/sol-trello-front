@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { EditText, EditTextarea } from "react-edit-text";
@@ -267,10 +268,10 @@ const ContentCalendar = () => {
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
-        const res = await fetch("https://apisoltrello.liara.run/api/content/bg-color/");
+        const res = await fetch('https://apisoltrello.liara.run/api/content/bg-color/');
         const data = await res.json();
         setMenuItems(
-          data.map((item) => ({
+          data.map(item => ({
             id: item.id,
             name: item.name,
             hexValue: item.hex_value,
@@ -280,33 +281,31 @@ const ContentCalendar = () => {
         console.error("Error fetching menu items:", error);
       }
     };
+
     fetchMenuItems();
   }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch(
-          `https://apisoltrello.liara.run/api/content/page-content/`
-        );
+        const res = await fetch('http://127.0.0.1:8000/api/content/page-day/');
         const data = await res.json();
-        console.log("Main content data:", data); // Log the main content data to check structure
+        // console.log("Main content data:", data);
 
-        // Get current day in the Jalali calendar
-        const today = new Date();
-        const { jd } = jalaali.toJalaali(today);
-        const currentDay = ((jd - 1) % 26) + 1;
+        // const today = new Date();
+        // const { jd } = jalaali.toJalaali(today);
+        // const currentDay = ((jd - 1) % 26) + 1;
 
-        // Filter data to include only entries matching the current day
-        const filteredData = data.filter(entry => entry.day == currentDay);
-
-        setCalendarData(filteredData);
+        // const filteredData = data.filter(entry => entry.day == currentDay);
+        console.log(data)
+        setCalendarData(data);
       } catch (error) {
         console.error("Error fetching calendar data:", error);
       }
     };
+
     fetchData();
-  }, [collectionName]);
+  }, [collectionName]); // Add relevant dependencies here
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -315,17 +314,17 @@ const ContentCalendar = () => {
   }, []);
 
   const handleColorSelect = (id, field, colorId) => {
-    setEditedData((prevData) => ({
+    setEditedData(prevData => ({
       ...prevData,
       [id]: {
         ...prevData[id],
-        [field]: colorId, // This should be the color ID
+        [field]: colorId,
       },
     }));
   };
 
   const handleEdit = (id, field, value) => {
-    setEditedData((prevData) => ({
+    setEditedData(prevData => ({
       ...prevData,
       [id]: {
         ...prevData[id],
@@ -351,12 +350,12 @@ const ContentCalendar = () => {
 
         if (response.ok) {
           const updatedData = await response.json();
-          setCalendarData((prev) =>
-            prev.map((entry) =>
+          setCalendarData(prev =>
+            prev.map(entry =>
               entry.id === id ? { ...entry, ...updatedData } : entry
             )
           );
-          setEditedData((prevData) => ({ ...prevData, [id]: {} }));
+          setEditedData(prevData => ({ ...prevData, [id]: {} }));
         } else {
           console.error("Failed to save data");
         }
@@ -370,12 +369,12 @@ const ContentCalendar = () => {
     <>
       <section className="w-full h-auto overflow-y-auto mb-6 px-2">
         <Header />
-        {calendarData.map((entry) => (
+        {calendarData.map(entry => (
           <ContentEntry
             key={entry.id}
             entry={entry}
             user={user}
-            handleEdit={handleEdit} // Implement or pass these functions
+            handleEdit={handleEdit}
             handleSave={handleSave}
             menuItems={menuItems}
             handleColorSelect={handleColorSelect}
