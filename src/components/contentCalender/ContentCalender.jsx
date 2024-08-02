@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { EditText, EditTextarea } from "react-edit-text";
@@ -6,6 +5,7 @@ import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import jalaali from "jalaali-js";
 import { Link } from "react-router-dom";
+import { alignPropType } from "react-bootstrap/esm/types";
 
 const Header = () => (
   <div className="w-full h-auto flex justify-center items-center px-1 py-2">
@@ -290,14 +290,8 @@ const ContentCalendar = () => {
       try {
         const res = await fetch('http://127.0.0.1:8000/api/content/page-day/');
         const data = await res.json();
-        // console.log("Main content data:", data);
+        console.log("Main content data:", data);
 
-        // const today = new Date();
-        // const { jd } = jalaali.toJalaali(today);
-        // const currentDay = ((jd - 1) % 26) + 1;
-
-        // const filteredData = data.filter(entry => entry.day == currentDay);
-        console.log(data)
         setCalendarData(data);
       } catch (error) {
         console.error("Error fetching calendar data:", error);
@@ -308,9 +302,12 @@ const ContentCalendar = () => {
   }, [collectionName]); // Add relevant dependencies here
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const isStaff = localStorage.getItem("is_staff");
-    setUser(token && token.split(".").length === 3 && isStaff === "true");
+    const authDataString = localStorage.getItem("authData");
+    if (authDataString) {
+      const authData = JSON.parse(authDataString);
+      console.log(authData.is_staff)
+      setUser(authData && authData.access && authData.access.split(".").length === 3 && authData.is_staff);
+    }
   }, []);
 
   const handleColorSelect = (id, field, colorId) => {

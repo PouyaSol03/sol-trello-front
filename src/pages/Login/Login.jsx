@@ -13,16 +13,18 @@ const Login = () => {
     setError("");
 
     try {
-      const response = await axios.post("https://apisoltrello.liara.run/api/login/", {
+      const response = await axios.post("http://127.0.0.1:8000/api/login/", {
         username,
         password,
       });
 
       if (response.status === 200) {
-        const { access, username, is_staff } = response.data; // Extract is_staff from response
-        localStorage.setItem("token", access);
-        localStorage.setItem("username", username);
-        localStorage.setItem("is_staff", is_staff); // Store is_staff in local storage
+        const loginResponse = {
+          access: response.data.access,
+          username: response.data.username,
+          is_staff: response.data.is_staff,
+        };
+        localStorage.setItem("authData", JSON.stringify(loginResponse));
         navigate("/dashboard");
       } else {
         throw new Error("Login failed");

@@ -1,78 +1,48 @@
 import React, { useState, useEffect } from "react";
-import moment from "moment-jalaali";
-import { digitsEnToFa } from "@persian-tools/persian-tools";
 import { ContentCalendar } from "../../components/contentCalender/ContentCalender";
 import styles from "./Dashboard.module.css";
 import profileImg from "../../assets/image/ProfilePicDefault.jpg";
-import {jwtDecode} from "jwt-decode";
 import { OldContent } from "../../components/OldContent/OldContent";
-import { CollectionPage } from "../../components/Page/CollectionPage";
+import { Taskmanage } from "../../components/task/Taskmanage";
 
 const Dashboard = () => {
-  const [persianTime, setPersianTime] = useState("");
-  // const [pageNames, setPageNames] = useState([]);
-  const [selectedPage, setSelectedPage] = useState("oldTotalContent");
+  const [selectedPage, setSelectedPage] = useState("newTotalContent");
   const [username, setUsername] = useState("");
 
-  // useEffect(() => {
-  //   const fetchPageNames = async () => {
-  //     try {
-  //       const response = await fetch("http://127.0.0.1:8000/api/content/name-page/");
-  //       if (!response.ok) {
-  //         throw new Error("Failed to fetch page names");
-  //       }
-  //       const data = await response.json();
-  //       setPageNames(data); // Assuming data is an array of objects with name and imageUrl
-  //     } catch (error) {
-  //       console.error("Error fetching page names:", error);
-  //     }
-  //   };
-
-  //   fetchPageNames();
-
-  //   const intervalId = setInterval(updateTime, 1000); // Update time every second
-
-  //   return () => clearInterval(intervalId); // Cleanup interval on component unmount
-  // }, []);
-
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    console.log("Token:", token); // Log the token for debugging
-
-    if (token && token.split('.').length === 3) {
+    const authDataString = localStorage.getItem("authData");
+    if (authDataString) {
       try {
-        const decoded = jwtDecode(token);
-        console.log("Decoded token:", decoded); // Log the decoded token for debugging
-
-        // If the token is a simple string like "admin", set username directly
-        if (typeof decoded === "string") {
-          setUsername(decoded);
+        const authData = JSON.parse(authDataString);
+        if (authData && authData.username) {
+          setUsername(authData.username);
         } else {
-          setUsername(decoded.username || "کاربر");
+          setUsername("کاربر");
         }
       } catch (error) {
-        console.error("Invalid token:", error);
+        console.error("Error parsing authData:", error);
         setUsername("کاربر");
       }
     } else {
-      // Handle case where token is not a JWT but a simple string
-      setUsername(token || "کاربر");
+      setUsername("کاربر");
     }
   }, []);
 
-  const updateTime = () => {
-    const currentTime = new Date();
-    const timeAndDate = moment(currentTime).format("jYYYY/jMM/jDD HH:mm:ss");
-    const formattedTime = digitsEnToFa(timeAndDate);
-    setPersianTime(formattedTime);
+  useEffect(() => {
+    console.log("Username state updated:", username); // Log the username for debugging
+  }, [username]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("authData");
+    navigate("/login", { replace: true });
   };
 
   const renderContent = () => {
     switch (selectedPage) {
-      case "oldTotalContent":
-        return <OldContent />;
       case "newTotalContent":
         return <ContentCalendar />;
+      case "taskmanagement":
+        return <Taskmanage />;
       default:
         return <OldContent />;
     }
@@ -83,7 +53,7 @@ const Dashboard = () => {
       className={`w-screen h-screen font-sans p-4 bg-sky-800 text-slate-500 flex justify-center items-center gap-x-4 ${styles.dashboard}`}
       style={{ fontFamily: "iransans" }}
     >
-      <aside className="w-72 h-full bg-slate-50 rounded-2xl p-4 shadow-2xl">
+      <aside className="w-72 h-full bg-slate-50 rounded-2xl p-4 shadow-2xl flex flex-col justify-between">
         <div className="relative w-full h-full flex flex-col justify-start items-center gap-2">
           <div className="w-full">
             <h2 className="w-full text-black font-bold text-center" style={{ fontSize: "20px" }}>
@@ -94,15 +64,6 @@ const Dashboard = () => {
           <div className="w-full h-full flex flex-col justify-start items-center gap-1">
             <div
               className={`mt-3 w-full flex justify-start items-center gap-2 cursor-pointer ${
-                selectedPage === "oldTotalContent" ? "bg-blue-400 text-white" : "hover:bg-slate-200"
-              }`}
-              style={{ padding: "5px", borderRadius: "6px" }}
-              onClick={() => setSelectedPage("oldTotalContent")}
-            >
-              <p>محتوا قدیمی</p>
-            </div>
-            <div
-              className={`mt-3 w-full flex justify-start items-center gap-2 cursor-pointer ${
                 selectedPage === "newTotalContent" ? "bg-blue-400 text-white" : "hover:bg-slate-200"
               }`}
               style={{ padding: "5px", borderRadius: "6px" }}
@@ -110,18 +71,31 @@ const Dashboard = () => {
             >
               <p>محتوا جدید</p>
             </div>
-          </div>
-
-          <div className="w-full h-14 flex justify-start items-center gap-3">
-            <img
-              className="w-14 h-full rounded-full"
-              src={profileImg}
-              alt=""
-              style={{ width: "54px", height: "54px" }}
-            />
-            <div>
-              <p>{username}</p>
+            <div
+              className={`mt-3 w-full flex justify-start items-center gap-2 cursor-pointer ${
+                selectedPage === "taskmanagement" ? "bg-blue-400 text-white" : "hover:bg-slate-200"
+              }`}
+              style={{ padding: "5px", borderRadius: "6px" }}
+              onClick={() => setSelectedPage("taskmanagement")}
+            >
+              <p>مدیریت تسک ها</p>
             </div>
+          </div>
+        </div>
+        <div className="w-full h-14 flex justify-around items-center gap-2">
+          <div className="w-1/3">
+          <img
+            className="rounded-full"
+            src={profileImg}
+            alt=""
+            style={{ width: "54px", height: "54px" }}
+          />
+          </div>
+          <div className="w-full flex justify-between items-center">
+            <p>{username}</p>
+            <button 
+            onClick={handleLogout}
+            className="">خروج</button>
           </div>
         </div>
       </aside>

@@ -4,17 +4,18 @@ import { Home } from './pages/Home/Home';
 import { Login } from './pages/Login/Login';
 import { Register } from './pages/Register/Register';
 import {CollectionPage} from './components/Page/CollectionPage';
+import { PrivateRoute } from './components/privateroute';
 
 function App() {
   return (
     <>
       <Router>
         <Routes>
-          <Route path='/' element={<Home />} />
+          <Route path="/" element={<Login />} /> {/* Default route */}
           <Route path='/login' element={<Login />} />
           <Route path='/register' element={<Register />} />
-          <Route path='/dashboard' element={<Dashboard />} />
-          <Route path='/collection/:collectionName' element={<CollectionPage />} />
+          <Route path='/dashboard' element={<PrivateRoute element={<Dashboard />} />} />
+          <Route path='/collection/:collectionName' element={<PrivateRoute element={<CollectionPage />} />} />
         </Routes>
       </Router>
     </>

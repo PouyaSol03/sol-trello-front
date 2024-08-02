@@ -20,17 +20,27 @@ const Register = () => {
     }
 
     try {
-      const response = await axios.post("https://apisoltrello.liara.run/api/register/", {
+      const response = await axios.post("http://127.0.0.1:8000/api/register/", {
         username,
         password,
         email: email || undefined, // Make email optional
       });
-      
-      const { access, refresh } = response.data;
-      localStorage.setItem("token", access);
-      localStorage.setItem("refreshToken", refresh);
-      navigate("/");
+
+      if (response.status === 201) {
+        const { access, refresh, username, is_staff } = response.data;
+        const authData = {
+          access,
+          refresh,
+          username,
+          is_staff,
+        };
+        localStorage.setItem("authData", JSON.stringify(authData));
+        navigate("/dashboard");
+      } else {
+        throw new Error("Registration failed");
+      }
     } catch (err) {
+      console.error("Error during registration:", err);
       if (err.response && err.response.data) {
         const errorMsg = Object.values(err.response.data).join(' ');
         setError(errorMsg || "Registration failed. Please check your details and try again.");
