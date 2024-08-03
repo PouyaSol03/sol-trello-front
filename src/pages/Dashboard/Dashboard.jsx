@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { ContentCalendar } from "../../components/contentCalender/ContentCalender";
 import styles from "./Dashboard.module.css";
 import profileImg from "../../assets/image/ProfilePicDefault.jpg";
 import { OldContent } from "../../components/OldContent/OldContent";
-import { Taskmanage } from "../../components/task/Taskmanage";
+// import { Taskmanage } from "../task/Taskmanage";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const [selectedPage, setSelectedPage] = useState("newTotalContent");
   const [username, setUsername] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const authDataString = localStorage.getItem("authData");
@@ -41,8 +44,6 @@ const Dashboard = () => {
     switch (selectedPage) {
       case "newTotalContent":
         return <ContentCalendar />;
-      case "taskmanagement":
-        return <Taskmanage />;
       default:
         return <OldContent />;
     }
@@ -71,15 +72,14 @@ const Dashboard = () => {
             >
               <p>محتوا جدید</p>
             </div>
-            <div
-              className={`mt-3 w-full flex justify-start items-center gap-2 cursor-pointer ${
-                selectedPage === "taskmanagement" ? "bg-blue-400 text-white" : "hover:bg-slate-200"
-              }`}
+            <Link
+              className={`mt-3 w-full flex justify-start items-center gap-2 cursor-pointer hover:bg-slate-200`}
               style={{ padding: "5px", borderRadius: "6px" }}
-              onClick={() => setSelectedPage("taskmanagement")}
+              // onClick={() => setSelectedPage("taskmanagement")}
+              to='/task-management'
             >
               <p>مدیریت تسک ها</p>
-            </div>
+            </Link>
           </div>
         </div>
         <div className="w-full h-14 flex justify-around items-center gap-2">

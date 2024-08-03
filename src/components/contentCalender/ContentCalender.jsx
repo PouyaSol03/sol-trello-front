@@ -288,7 +288,7 @@ const ContentCalendar = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/content/page-day/');
+        const res = await fetch('https://apisoltrello.liara.run/api/content/page-day/');
         const data = await res.json();
         console.log("Main content data:", data);
 
