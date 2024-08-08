@@ -37,7 +37,7 @@ const Dashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("authData");
-    navigate("/login", { replace: true });
+    navigate("/", { replace: true });
   };
 
   const renderContent = () => {

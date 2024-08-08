@@ -20,7 +20,7 @@ const Register = () => {
     }
 
     try {
-      const response = await axios.post("http://127.0.0.1:8000/api/register/", {
+      const response = await axios.post("https://apisoltrello.liara.run/api/register/", {
         username,
         password,
         email: email || undefined, // Make email optional
@@ -35,7 +35,7 @@ const Register = () => {
           is_staff,
         };
         localStorage.setItem("authData", JSON.stringify(authData));
-        navigate("/dashboard");
+        navigate("/login");
       } else {
         throw new Error("Registration failed");
       }

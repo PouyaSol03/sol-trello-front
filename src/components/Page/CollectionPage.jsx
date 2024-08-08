@@ -7,6 +7,7 @@ const CollectionPage = () => {
   const { collectionName } = useParams();
   const [namePages, setNamePages] = useState([]);
   const [selectedButton, setSelectedButton] = useState(1); // Set default to 1
+  
 
   useEffect(() => {
     const fetchNamePages = async () => {

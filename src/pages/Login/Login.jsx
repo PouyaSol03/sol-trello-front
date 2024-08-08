@@ -2,6 +2,8 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
+const apiUrl = import.meta.env.VITE_API_URL;
+
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -13,77 +15,83 @@ const Login = () => {
     setError("");
 
     try {
-      const response = await axios.post("http://127.0.0.1:8000/api/login/", {
+      const response = await axios.post(`${apiUrl}/api/login/`, {
         username,
         password,
       });
 
       if (response.status === 200) {
-        const loginResponse = {
-          access: response.data.access,
-          username: response.data.username,
-          is_staff: response.data.is_staff,
-        };
+        const { access, username: responseUsername, is_staff } = response.data;
+        localStorage.setItem("authToken", access);
+        const loginResponse = { username: responseUsername, is_staff };
         localStorage.setItem("authData", JSON.stringify(loginResponse));
-        navigate("/dashboard");
+
+        // Redirect based on username
+        if (responseUsername === "bonito") {
+          navigate("/bonito");
+        } else {
+          navigate("/dashboard"); // Redirect to the default page or dashboard
+        }
       } else {
         throw new Error("Login failed");
       }
     } catch (error) {
-      console.error("Error during login:", error);
-      setError("نام کاربری یا رمز عبور اشتباه است");
+      // Handle error response more specifically
+      const errorMessage = error.response?.data?.message || "نام کاربری یا رمز عبور اشتباه است";
+      console.error("Error during login:", errorMessage);
+      setError(errorMessage);
     }
   };
 
   return (
-    <main className="flex justify-center w-full h-screen items-center text-blue-50">
+    <main className="flex justify-center w-full h-screen items-center bg-gray-50">
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-          <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
+          <h2 className="text-center text-2xl font-bold leading-9 text-gray-900">
             ورود
           </h2>
-        </div>
-        {error && <p className="w-full text-center text-red-500 mt-4">{error}</p>}
-        <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+          {error && (
+            <p className="w-full text-center text-red-500 mt-4">{error}</p>
+          )}
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="username" className="block text-sm font-medium leading-6 text-gray-900">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-900"
+              >
                 نام کاربری
               </label>
-              <div className="mt-2">
-                <input
-                  type="text"
-                  id="username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  className="bg-slate-200 block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
-                />
-              </div>
+              <input
+                type="text"
+                id="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                className="mt-1 block w-full rounded-md sm:text-sm border h-10 px-2"
+              />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-900"
+              >
                 رمز عبور
               </label>
-              <div className="mt-2">
-                <input
-                  type="password"
-                  id="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="bg-slate-200 block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 sm:text-sm sm:leading-6 focus:outline-none"
-                />
-              </div>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="mt-1 block w-full rounded-md sm:text-sm h-10 border px-2"
+              />
             </div>
-            <div>
-              <button
-                type="submit"
-                className="flex w-full justify-center rounded-md bg-indigo-500 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500"
-              >
-                ورود
-              </button>
-            </div>
+            <button
+              type="submit"
+              className="w-full rounded-md bg-indigo-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-600"
+            >
+              ورود
+            </button>
           </form>
         </div>
       </div>
