@@ -306,7 +306,7 @@ const ContentCalendar = () => {
     if (authDataString) {
       const authData = JSON.parse(authDataString);
       console.log(authData.is_staff)
-      setUser(authData && authData.access && authData.access.split(".").length === 3 && authData.is_staff);
+      setUser(authData.is_staff);
     }
   }, []);
 
