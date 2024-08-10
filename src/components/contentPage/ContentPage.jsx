@@ -31,7 +31,7 @@ const Header = () => (
     </div>
   </div>
 );
-
+///
 const Modal = ({
   id,
   entry,
@@ -264,7 +264,9 @@ const ContentPage = () => {
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
-        const res = await fetch("https://apisoltrello.liara.run/api/content/bg-color/");
+        const res = await fetch(
+          "https://apisoltrello.liara.run/api/content/bg-color/"
+        );
         const data = await res.json();
         setMenuItems(
           data.map((item) => ({
@@ -300,7 +302,7 @@ const ContentPage = () => {
     const authDataString = localStorage.getItem("authData");
     if (authDataString) {
       const authData = JSON.parse(authDataString);
-      console.log(authData.is_staff)
+      console.log(authData.is_staff);
       setUser(authData.is_staff);
     }
   }, []);

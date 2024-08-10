@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable react/prop-types */
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { EditText, EditTextarea } from "react-edit-text";
@@ -5,7 +7,7 @@ import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import jalaali from "jalaali-js";
 import { Link } from "react-router-dom";
-import { alignPropType } from "react-bootstrap/esm/types";
+// import { alignPropType } from "react-bootstrap/esm/types";
 
 const Header = () => (
   <div className="w-full h-auto flex justify-center items-center px-1 py-2">
@@ -288,18 +290,38 @@ const ContentCalendar = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('https://apisoltrello.liara.run/api/content/page-day/');
-        const data = await res.json();
-        console.log("Main content data:", data);
-
-        setCalendarData(data);
+        // Fetch data from APIs
+        const resPageDay = await fetch('http://127.0.0.1:8000/api/content/page-day/');
+        const pageDayData = await resPageDay.json();
+        const resHoliday = await fetch('http://127.0.0.1:8000/api/content/holy-day/');
+        const holidayData = await resHoliday.json();
+  
+        // Convert today's date to Jalaali
+        const today = new Date();
+        const { jy, jm, jd } = jalaali.toJalaali(today);
+        const todaySolar = `${jy}-${jm.toString().padStart(2, '0')}-${jd.toString().padStart(2, '0')}`; // Ensure leading zeros
+        console.log("Today's Jalaali date:", todaySolar);
+  
+        // Prepare a set of Friday holidays
+        const fridays = new Set(holidayData.filter(holiday => holiday.relation === 'جمعه').map(holiday => holiday.date));
+        console.log("Fridays Set:", fridays);
+  
+        // Check if today is a Friday holiday
+        if (fridays.has(todaySolar)) {
+          console.log("Today is Friday, and it's a holiday.");
+          setCalendarData([]); // Clear the data or handle accordingly
+        } else {
+          console.log("Today is not a holiday.");
+          setCalendarData(pageDayData);
+        }
       } catch (error) {
         console.error("Error fetching calendar data:", error);
       }
     };
-
+  
     fetchData();
-  }, [collectionName]); // Add relevant dependencies here
+  }, [collectionName]);
+  
 
   useEffect(() => {
     const authDataString = localStorage.getItem("authData");
